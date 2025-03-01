@@ -146,11 +146,13 @@ class test_commonlyUsed(unittest.TestCase):
         self.assertFalse(commonlyUsedCheck("c@#SkyF982irj"));
         self.assertFalse(commonlyUsedCheck("J*6was1s@@"));
         
-    #def test_exception(self):
-        #with patch('password_strength_checker.commonlyUsedCheck', "test"):
-            #self.assertRaises(FileNotFoundError, commonlyUsedCheck("test"));
-            
-        #self.assertEqual(commonlyUsedCheck("test", False));
+    @patch('password_strength_checker.open')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_read_file_exception(self, stdout_mock, mock_open):
+        mock_open.side_effect = FileNotFoundError
+        result = commonlyUsedCheck('password')
+        self.assertFalse(result)
+        self.assertIn("An error occurred:", stdout_mock.getvalue());
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
