@@ -113,12 +113,3 @@ def main():
 
 if __name__ == '__main__':
     main();
-
-"""
-https://owasp.org/www-community/password-special-characters
-
-https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#:~:text=Implement%20Proper%20Password%20Strength%20Controls,-A%20key%20concern&text=Passwords%20shorter%20than%208%20characters,long%20password%20denial%20of%20service.
-
-https://github.com/danielmiessler/SecLists/tree/master/Passwords
-
-"""
