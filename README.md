@@ -1,9 +1,10 @@
 # Password-Strength-Checker
-This is a password strength checker created in Python that evaluates a password strength based on NIST and OWASP recommendations, checks against one of the SecList list of common passwords, provides security feedback, and includes test cases to validate checker’s accuracy.
+This is a password strength checker created in Python that evaluates a password strength based on NIST and OWASP recommendations.
 
 ## Features
 - Checks against a common passwords list (SecList Top 10 Million Password List)
 - Provides security feedback and recommendations for better security
+- Includes test cases to validate checker’s accuracy
 
 ## Password Criteria
 - Minimum length of 15 characters recommended by NIST
