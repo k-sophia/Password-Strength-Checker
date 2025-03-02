@@ -11,7 +11,7 @@ passwordStrength = {
 }
 
 additionalFeedback = [
-    "Though minimum length is 8, it is recommended to have longer passwords",
+    "Though the recommended minimum length is 8, NIST recommends 15 for optimal security",
     "Update passwords periodically, especially for sensitive accounts",
     "Never use the same password for multiple accounts or services",
     "Avoid the use of common, simple, and predictable passwords",
@@ -22,7 +22,7 @@ additionalFeedback = [
 
 def criteriaCheck(password):
         
-    hasMinLength = len(password) >= 8;
+    hasMinLength = len(password) >= 15;
     hasLowercase = re.search(r"[a-z]", password) is not None;
     hasUppercase = re.search(r"[A-Z]", password) is not None;
     hasDigit = re.search(r"\d", password) is not None;
@@ -46,8 +46,8 @@ def getFeedback(criteriaResults):
     strengthFeedback = [];
     
     if not criteriaResults["hasMinLength"]:
-        criteriaFeedback.append("Must be at least 8 characters");
-        strengthFeedback.append("Passwords shorter than 8 characters are considered to be weak (NIST SP800-63B)");
+        criteriaFeedback.append("Must be at least 15 characters");
+        strengthFeedback.append("NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)");
     if not criteriaResults["hasLowercase"]:
         criteriaFeedback.append("Must have at least 1 lowercase letter");
     if not criteriaResults["hasUppercase"]:

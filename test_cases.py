@@ -6,7 +6,7 @@ from password_strength_checker import criteriaCheck, getStrengthValue, getFeedba
 class test_criteria(unittest.TestCase):
     def test_length(self):
         self.assertFalse(criteriaCheck("123")["hasMinLength"]);
-        self.assertTrue(criteriaCheck("12345678")["hasMinLength"]);
+        self.assertTrue(criteriaCheck("hasminimallength")["hasMinLength"]);
     
     def test_lowercase(self):
         self.assertFalse(criteriaCheck("ABC")["hasLowercase"]);
@@ -86,9 +86,9 @@ class test_feedback(unittest.TestCase):
     
     def test_length_feedback(self):
         self.criteriaResults["hasMinLength"] = False;
-        expectedCriteriaFeedback = "Must be at least 8 characters";
+        expectedCriteriaFeedback = "Must be at least 15 characters";
         self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0]);
-        expectedSecurityFeedback = "Passwords shorter than 8 characters are considered to be weak (NIST SP800-63B)";
+        expectedSecurityFeedback = "NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)";
         self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1]);
     
     def test_lowercase_feedback(self):
