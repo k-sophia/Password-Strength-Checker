@@ -15,9 +15,12 @@ additionalFeedback = [
     "Update passwords periodically, especially for sensitive accounts",
     "Never use the same password for multiple accounts or services",
     "Avoid the use of common, simple, and predictable passwords",
-    "Check if password was previouslt exposed in data breach - such as Have I Been Pwned",
-    "Use Multi-Factor Authenticaiton when given the option",
-    "Do not use personal information in the password"
+    "Check if password was previously exposed in data breach - such as Have I Been Pwned",
+    "Use Multi-Factor Authentication when given the option",
+    "Do not use personal information in the password",
+    "Use a reliable password manager to generate and securely store unique/complex passwords for multiple accounts",
+    "Opt for a passphrase composed of multiple random words to ensure strong security and simple recall",
+    "Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'"
 ]
 
 def criteriaCheck(password):
