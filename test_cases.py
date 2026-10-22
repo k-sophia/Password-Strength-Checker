@@ -152,7 +152,8 @@ class test_commonlyUsed(unittest.TestCase):
         mock_open.side_effect = FileNotFoundError
         result = commonlyUsedCheck('password')
         self.assertFalse(result)
-        self.assertIn("An error occurred:", stdout_mock.getvalue());
+        expected_string = "Error: The password list file '10-million-password-list-top-1000000.txt' was not found."
+        self.assertIn(expected_string, stdout_mock.getvalue());
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
