@@ -1,6 +1,8 @@
 import re
 import random
 
+defaultCommonPasswordFile = "10-million-password-list-top-1000000.txt"
+
 passwordStrength = {
     0 : "Very Weak",
     1 : "Very Weak",
@@ -68,13 +70,15 @@ def getFeedback(criteriaResults):
         
     return criteriaFeedback, strengthFeedback
     
-def commonlyUsedCheck(password):
+def commonlyUsedCheck(password, filename=defaultCommonPasswordFile):
     try:
-        filename = "10-million-password-list-top-1000000.txt"
-        with open(filename, "r") as file:
+        with open(filename, "r", encoding="utf-8") as file:
             for line in file:
                 if line.strip() == password:
                     return True
+        return False
+    except FileNotFoundError:
+        print(f"Error: The password list file '{filename}' was not found.")
         return False
     except Exception as e:
         print(f"An error occurred: {e}")
