@@ -1,11 +1,12 @@
 import re
 import random
+from pathlib import Path
 
 # ==========================================
 # CONFIGURATION
 # ==========================================
 
-DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
+DEFAULT_COMMON_PASSWORD_FILE = Path("10-million-password-list-top-1000000.txt")
 
 PASSWORD_STRENGTH_VALUES = {
     0 : "Very Weak",
