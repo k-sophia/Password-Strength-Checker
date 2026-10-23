@@ -1,8 +1,16 @@
 from io import StringIO
 import unittest
 from unittest.mock import patch
-from password_strength_checker import criteriaCheck, getStrengthValue, getFeedback, additionalFeedback, commonlyUsedCheck, isPasswordStrong, main, printResults
-
+from password_strength_checker import (
+    SECURITY_RECOMMENDATIONS,
+    criteriaCheck,
+    getStrengthValue,
+    getFeedback,
+    commonlyUsedCheck,
+    printResults,
+    isPasswordStrong,
+    main
+)
 class test_criteria(unittest.TestCase):
     def test_length(self):
         self.assertFalse(criteriaCheck("123")["hasMinLength"])
@@ -116,14 +124,14 @@ class test_feedback(unittest.TestCase):
     #check for 3 cases of additional feedback 
     def test_add_3_feedback(self):
         outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(additionalFeedback)
+        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
         self.assertEqual(len(outputResults), 3)
         self.assertEqual(len(sharedValue), 3)
     
     def test_add_2_feedback(self):
         self.criteriaResults["hasMinLength"] = False
         outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(additionalFeedback)
+        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
         self.assertEqual(len(outputResults), 3)
         self.assertEqual(len(sharedValue), 2)
     
@@ -131,7 +139,7 @@ class test_feedback(unittest.TestCase):
         self.criteriaResults["hasMinLength"] = False
         self.criteriaResults["hasSpecial"] = False
         outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(additionalFeedback)
+        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
         self.assertEqual(len(outputResults), 3)
         self.assertEqual(len(sharedValue), 1)
 
@@ -169,7 +177,8 @@ class test_printResults(unittest.TestCase):
     def test_print_criteria_feedback(self, stdout_mock):
         printResults("weak", ["test1", "test2"], [], False)
         self.assertIn("Password Strength: weak", stdout_mock.getvalue())
-        self.assertIn(" - test1\n - test2", stdout_mock.getvalue())
+        self.assertIn(" - test1", stdout_mock.getvalue())
+        self.assertIn(" - test2", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_common_true(self, stdout_mock):
@@ -189,7 +198,8 @@ class test_printResults(unittest.TestCase):
     def test_print_strength_feedback(self, stdout_mock):
         printResults("", [], ["test1", "test2"], False)
         self.assertIn("\nSecurity Recommendations:", stdout_mock.getvalue())
-        self.assertIn(" - test1\n - test2", stdout_mock.getvalue())
+        self.assertIn(" - test1", stdout_mock.getvalue())
+        self.assertIn(" - test2", stdout_mock.getvalue())
 
 class test_isPasswordStrong(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
