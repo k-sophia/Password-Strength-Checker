@@ -1,9 +1,13 @@
 import re
 import random
 
-defaultCommonPasswordFile = "10-million-password-list-top-1000000.txt"
+# ==========================================
+# CONFIGURATION
+# ==========================================
 
-passwordStrength = {
+DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
+
+PASSWORD_STRENGTH_VALUES = {
     0 : "Very Weak",
     1 : "Very Weak",
     2 : "Weak",
@@ -12,7 +16,7 @@ passwordStrength = {
     5 : "Strong"
 }
 
-additionalFeedback = [
+SECURITY_RECOMMENDATIONS = [
     "Though the recommended minimum length is 8, NIST recommends 15 for optimal security",
     "Update passwords periodically, especially for sensitive accounts",
     "Never use the same password for multiple accounts or services",
@@ -25,8 +29,12 @@ additionalFeedback = [
     "Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'"
 ]
 
+# ==========================================
+# VALIDATION AND EVALUATION
+# ==========================================
+
 def criteriaCheck(password):
-        
+    """Evaluates password against length, case, digit, and special character"""
     hasMinLength = len(password) >= 15
     hasLowercase = re.search(r"[a-z]", password) is not None
     hasUppercase = re.search(r"[A-Z]", password) is not None
@@ -42,11 +50,13 @@ def criteriaCheck(password):
         "hasDigit": hasDigit,
         "hasSpecial": hasSpecial
     }
-    
+
 def getStrengthValue(criteriaResults):
-    return passwordStrength[sum(criteriaResults.values())]
+    """Maps total met criteria to a string of descriptive password strength level"""
+    return PASSWORD_STRENGTH_VALUES[sum(criteriaResults.values())]
 
 def getFeedback(criteriaResults):
+    """Generates specific criteria improvements and recommendations based on evaluation results"""
     criteriaFeedback = []
     strengthFeedback = []
     
@@ -64,13 +74,14 @@ def getFeedback(criteriaResults):
         strengthFeedback.append("OWASP recommends using these characters (between double quotes): \" !\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~\"")
     
     if len(strengthFeedback) < 3:
-        newfeedback = random.sample(additionalFeedback, 3 - len(strengthFeedback))
+        newfeedback = random.sample(SECURITY_RECOMMENDATIONS, 3 - len(strengthFeedback))
         for n in newfeedback:
             strengthFeedback.append(n)
         
     return criteriaFeedback, strengthFeedback
-    
-def commonlyUsedCheck(password, filename=defaultCommonPasswordFile):
+
+def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
+    """Streams through a common password file to check if given password matches"""
     try:
         with open(filename, "r", encoding="utf-8") as file:
             for line in file:
@@ -84,8 +95,12 @@ def commonlyUsedCheck(password, filename=defaultCommonPasswordFile):
         print(f"An error occurred: {e}")
         return False
 
-def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
+# ==========================================
+# ORCHESTRATION
+# ==========================================
 
+def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
+    """Formats and displays evaluation results and security recommendations"""
     print("Password Strength: " + strength)
     for c in criteriaFeedback:
         print(" - " + c)
@@ -96,12 +111,12 @@ def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
     else:
         print("\nYour password is not in the Seclist top password list being used here.")
         
-    
     print("\nSecurity Recommendations:")
     for s in strengthFeedback:
         print(" - " + s)
 
 def isPasswordStrong(password):
+    """Validates input constraints and orchestrates workflow"""
     if not password or password.isspace():
             print("Invalid Password")
             return
@@ -113,6 +128,9 @@ def isPasswordStrong(password):
 
     printResults(strength, criteriaFeedback, strengthFeedback, isCommon)
 
+# ==========================================
+# MAIN FUNCTION
+# ==========================================
 
 def main():
     password = input("Enter Password: ")
