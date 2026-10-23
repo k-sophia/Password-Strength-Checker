@@ -154,6 +154,15 @@ class test_commonlyUsed(unittest.TestCase):
         self.assertFalse(result)
         expected_string = "Error: The password list file '10-million-password-list-top-1000000.txt' was not found."
         self.assertIn(expected_string, stdout_mock.getvalue())
+    
+    @patch('password_strength_checker.open')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_read_file_generic_exception(self, stdout_mock, mock_open):
+        mock_open.side_effect = PermissionError("Permission denied")
+        result = commonlyUsedCheck('password')
+        self.assertFalse(result)
+        expected_string = "An error occurred: Permission denied"
+        self.assertIn(expected_string, stdout_mock.getvalue())
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
@@ -186,6 +195,11 @@ class test_isPasswordStrong(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_no_password_given(self,stdout_mock):
         isPasswordStrong("")
+        self.assertIn("Invalid Password\n", stdout_mock.getvalue())
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_only_space_password_given(self,stdout_mock):
+        isPasswordStrong(" ")
         self.assertIn("Invalid Password\n", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)

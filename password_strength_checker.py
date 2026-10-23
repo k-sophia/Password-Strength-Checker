@@ -102,9 +102,9 @@ def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
         print(" - " + s)
 
 def isPasswordStrong(password):
-    if len(password) == 0:
-        print("Invalid Password")
-        return
+    if not password or password.isspace():
+            print("Invalid Password")
+            return
     
     criteriaResults = criteriaCheck(password)
     strength = getStrengthValue(criteriaResults)
