@@ -1,6 +1,7 @@
 import re
 import random
 from pathlib import Path
+import argparse
 
 # ==========================================
 # CONFIGURATION
@@ -90,8 +91,10 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
                     return True
         return False
     except FileNotFoundError:
-        print(f"Error: The password list file '{filename}' was not found.")
-        return False
+        resolved_path = Path(filename).resolve()
+        print(f"\nError: The password list file '{resolved_path}' was not found.")
+        print("Warning: Will run script without common check\n")
+        return None
     except Exception as e:
         print(f"An error occurred: {e}")
         return False
@@ -106,17 +109,17 @@ def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
     for c in criteriaFeedback:
         print(" - " + c)
         
-    if isCommon:
+    if isCommon is True:
         print("\nYour password is among the most commonly used and could be easily cracked.")
         print("For your protection, please update it to something more secure!")
-    else:
+    elif isCommon is False:
         print("\nYour password is not in the Seclist top password list being used here.")
-        
+   
     print("\nSecurity Recommendations:")
     for s in strengthFeedback:
         print(" - " + s)
 
-def isPasswordStrong(password):
+def isPasswordStrong(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
     """Validates input constraints and orchestrates workflow"""
     if not password or password.isspace():
             print("Invalid Password")
@@ -125,17 +128,28 @@ def isPasswordStrong(password):
     criteriaResults = criteriaCheck(password)
     strength = getStrengthValue(criteriaResults)
     criteriaFeedback, strengthFeedback = getFeedback(criteriaResults)
-    isCommon = commonlyUsedCheck(password)
+    isCommon = commonlyUsedCheck(password, filename)
 
     printResults(strength, criteriaFeedback, strengthFeedback, isCommon)
 
 # ==========================================
-# MAIN FUNCTION
+# ARGUMENT PARSING AND MAIN FUNCTION
 # ==========================================
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Check password strength.")
+    parser.add_argument(
+        "--wordlist", 
+        default=DEFAULT_COMMON_PASSWORD_FILE, 
+        help="Path to custom common password file"
+    )
+    return parser.parse_args()
+
 def main():
+    args = parse_arguments()
+    
     password = input("Enter Password: ")
-    isPasswordStrong(password)
+    isPasswordStrong(password, filename=args.wordlist)
 
 if __name__ == '__main__':
     main()
