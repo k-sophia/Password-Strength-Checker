@@ -157,11 +157,28 @@ class test_commonlyUsed(unittest.TestCase):
         
     @patch('pathlib.Path.is_file', return_value=False)
     @patch('sys.stdout', new_callable=StringIO)
-    def test_read_file_exception(self, stdout_mock, mock_open):
-        mock_open.side_effect = FileNotFoundError
+    def test_invalid_file_path(self, stdout_mock, mock_is_file):
+        result = commonlyUsedCheck('password', filename="bad_path.txt")
+        self.assertIsNone(result)
+        self.assertIn("Error: The password list file 'bad_path.txt' was not found.", stdout_mock.getvalue())
+    
+    @patch('pathlib.Path.is_file', return_value=True)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_file_extension(self, stdout_mock, mock_is_file):
+        result = commonlyUsedCheck('password', filename="wordlist.csv")
+        self.assertIsNone(result)
+        expected_string = "Error: 'wordlist.csv' must be a .txt file."
+        self.assertIn(expected_string, stdout_mock.getvalue())
+
+    @patch('pathlib.Path.is_file', return_value=True)
+    @patch('pathlib.Path.stat')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_file_size_exceeded(self, stdout_mock, mock_stat, mock_is_file):
+        # Mock st_size to return 60 MB (exceeding the 50 MB limit)
+        mock_stat.return_value.st_size = 60 * 1024 * 1024
         result = commonlyUsedCheck('password')
-        self.assertFalse(result)
-        expected_string = "Error: The password list file '10-million-password-list-top-1000000.txt' was not found."
+        self.assertIsNone(result)
+        expected_string = "Error: File size exceeds the maximum allowed limit (50MB)."
         self.assertIn(expected_string, stdout_mock.getvalue())
     
     @patch('pathlib.Path.is_file', return_value=True)
