@@ -7,7 +7,9 @@ import argparse
 # CONFIGURATION
 # ==========================================
 
-DEFAULT_COMMON_PASSWORD_FILE = Path("10-million-password-list-top-1000000.txt")
+DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
+
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
 
 PASSWORD_STRENGTH_VALUES = {
     0 : "Very Weak",
@@ -85,7 +87,16 @@ def getFeedback(criteriaResults):
 def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
     """Streams through a common password file to check if given password matches"""
     try:
-        with open(filename, "r", encoding="utf-8") as file:
+        path = Path(filename)
+        if not path.is_file():
+            print(f"\nError: '{path.resolve()}' is not a valid file.")
+            return None
+        
+        if path.stat().st_size > MAX_FILE_SIZE_BYTES:
+            print(f"\nError: File size exceeds the maximum allowed limit (50MB).")
+            return None
+        
+        with open(path, "r", encoding="utf-8") as file:
             for line in file:
                 if line.strip() == password:
                     return True
@@ -97,7 +108,7 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
         return None
     except Exception as e:
         print(f"An error occurred: {e}")
-        return False
+        return None
 
 # ==========================================
 # ORCHESTRATION
