@@ -184,10 +184,10 @@ class test_commonlyUsed(unittest.TestCase):
     @patch('pathlib.Path.is_file', return_value=True)
     @patch('pathlib.Path.stat')
     @patch('sys.stdout', new_callable=StringIO)
-    def test_read_file_generic_exception(self, stdout_mock, mock_open, mock_is_file):
-        mock_open.side_effect = PermissionError("Permission denied")
+    def test_read_file_generic_exception(self, stdout_mock, mock_stat, mock_is_file):
+        mock_stat.side_effect = PermissionError("Permission denied")
         result = commonlyUsedCheck('password')
-        self.assertFalse(result)
+        self.assertIsNone(result)
         expected_string = "An error occurred: Permission denied"
         self.assertIn(expected_string, stdout_mock.getvalue())
 
