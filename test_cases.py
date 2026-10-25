@@ -1,6 +1,7 @@
 from io import StringIO
 import unittest
 from unittest.mock import patch
+import tempfile
 from password_strength_checker import (
     SECURITY_RECOMMENDATIONS,
     criteriaCheck,
@@ -163,13 +164,16 @@ class test_commonlyUsed(unittest.TestCase):
         self.assertIsNone(result)
         self.assertIn("Error: The password list file 'bad_path.txt' was not found.", stdout_mock.getvalue())
     
-    @patch('pathlib.Path.is_file', return_value=True)
     @patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_file_extension(self, stdout_mock, mock_is_file):
-        result = commonlyUsedCheck('password', filename="wordlist.csv")
-        self.assertIsNone(result)
-        expected_string = "Error: 'wordlist.csv' must be a .txt file."
-        self.assertIn(expected_string, stdout_mock.getvalue())
+    def test_invalid_file_extension(self, stdout_mock):
+        # Creates a temporary file ending in .csv on your disk
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=True) as tmp:
+            # Pass the temp file's actual path string to your function
+            result = commonlyUsedCheck('password', filename=tmp.name)
+            
+            self.assertIsNone(result)
+            expected_string = f"Error: '{tmp.name}' must be a .txt file."
+            self.assertIn(expected_string, stdout_mock.getvalue()) # (or capture stdout)
 
     @patch('pathlib.Path.is_file', return_value=True)
     @patch('pathlib.Path.stat')
