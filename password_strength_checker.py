@@ -88,10 +88,19 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
     """Streams through a common password file to check if given password matches"""
     try:
         path = Path(filename)
+        
+        # 1. Verify it exists and is a real file (not a directory)
         if not path.is_file():
-            print(f"\nError: '{path.resolve()}' is not a valid file.")
+            print(f"\nError: The password list file '{filename}' was not found.")
+            print("Warning: Will run script without common check\n")
             return None
         
+        # 2. Enforce specific file type (.txt only)
+        if path.suffix.lower() != ".txt":
+            print(f"\nError: '{filename}' must be a .txt file.")
+            return None
+        
+        # 3. Size validation guard (Resource Exhaustion protection)
         if path.stat().st_size > MAX_FILE_SIZE_BYTES:
             print(f"\nError: File size exceeds the maximum allowed limit (50MB).")
             return None
@@ -101,10 +110,6 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
                 if line.strip() == password:
                     return True
         return False
-    except FileNotFoundError:
-        print(f"\nError: The password list file '{filename}' was not found.")
-        print("Warning: Will run script without common check\n")
-        return None
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
@@ -151,7 +156,7 @@ def parse_arguments():
     parser.add_argument(
         "--wordlist", 
         default=DEFAULT_COMMON_PASSWORD_FILE, 
-        help="Path to custom common password file"
+        help="Path to custom common password .txt file"
     )
     return parser.parse_args()
 
