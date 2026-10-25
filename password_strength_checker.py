@@ -102,8 +102,7 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
                     return True
         return False
     except FileNotFoundError:
-        resolved_path = Path(filename).resolve()
-        print(f"\nError: The password list file '{resolved_path}' was not found.")
+        print(f"\nError: The password list file '{filename}' was not found.")
         print("Warning: Will run script without common check\n")
         return None
     except Exception as e:
