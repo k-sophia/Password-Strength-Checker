@@ -11,6 +11,7 @@ from password_strength_checker import (
     isPasswordStrong,
     main
 )
+
 class test_criteria(unittest.TestCase):
     def test_length(self):
         self.assertFalse(criteriaCheck("123")["hasMinLength"])
@@ -154,7 +155,7 @@ class test_commonlyUsed(unittest.TestCase):
         self.assertFalse(commonlyUsedCheck("c@#SkyF982irj"))
         self.assertFalse(commonlyUsedCheck("J*6was1s@@"))
         
-    @patch('password_strength_checker.open')
+    @patch('pathlib.Path.is_file', return_value=False)
     @patch('sys.stdout', new_callable=StringIO)
     def test_read_file_exception(self, stdout_mock, mock_open):
         mock_open.side_effect = FileNotFoundError
@@ -163,9 +164,10 @@ class test_commonlyUsed(unittest.TestCase):
         expected_string = "Error: The password list file '10-million-password-list-top-1000000.txt' was not found."
         self.assertIn(expected_string, stdout_mock.getvalue())
     
-    @patch('password_strength_checker.open')
+    @patch('pathlib.Path.is_file', return_value=True)
+    @patch('pathlib.Path.stat')
     @patch('sys.stdout', new_callable=StringIO)
-    def test_read_file_generic_exception(self, stdout_mock, mock_open):
+    def test_read_file_generic_exception(self, stdout_mock, mock_open, mock_is_file):
         mock_open.side_effect = PermissionError("Permission denied")
         result = commonlyUsedCheck('password')
         self.assertFalse(result)
@@ -219,6 +221,7 @@ class test_isPasswordStrong(unittest.TestCase):
         self.assertIn("\nSecurity Recommendations:", stdout_mock.getvalue())
         
 class test_main(unittest.TestCase):
+    @patch('sys.argv', ['password_strength_checker.py'])
     @patch('builtins.input', return_value='')
     @patch('sys.stdout', new_callable=StringIO)
     def test_no_input(self, stdout_mock, mock_input):
@@ -226,6 +229,7 @@ class test_main(unittest.TestCase):
         mock_input.assert_called_once_with("Enter Password: ")
         self.assertIn("Invalid Password\n", stdout_mock.getvalue())
         
+    @patch('sys.argv', ['password_strength_checker.py'])
     @patch('builtins.input', return_value='password')
     @patch('sys.stdout', new_callable=StringIO)
     def test_with_input(self, stdout_mock, mock_input):
