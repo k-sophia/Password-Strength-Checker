@@ -13,25 +13,26 @@ from password_strength_checker import (
 )
 
 class test_criteria(unittest.TestCase):
-    def test_length(self):
-        self.assertFalse(criteriaCheck("123")["hasMinLength"])
-        self.assertTrue(criteriaCheck("hasminimallength")["hasMinLength"])
-    
-    def test_lowercase(self):
-        self.assertFalse(criteriaCheck("ABC")["hasLowercase"])
-        self.assertTrue(criteriaCheck("ABc")["hasLowercase"])
-    
-    def test_uppercase(self):
-        self.assertFalse(criteriaCheck("abc")["hasUppercase"])
-        self.assertTrue(criteriaCheck("abC")["hasUppercase"])
-    
-    def test_digit(self):
-        self.assertFalse(criteriaCheck("abc")["hasDigit"])
-        self.assertTrue(criteriaCheck("abc1")["hasDigit"])
-    
-    def test_special(self):
-        self.assertFalse(criteriaCheck("abc")["hasSpecial"])
-        self.assertTrue(criteriaCheck("abc ")["hasSpecial"])
+    def test_criteria_validations(self):
+        test_cases = [
+            # length check
+            ("123", "hasMinLength", False),
+            ("hasminimallength", "hasMinLength", True),
+            # case check
+            ("ABC", "hasLowercase", False),
+            ("ABc", "hasLowercase", True),
+            ("abc", "hasUppercase", False),
+            ("abC", "hasUppercase", True),
+            # digit check
+            ("abc", "hasDigit", False),
+            ("abc1", "hasDigit", True),
+            # special char checl
+            ("abc", "hasSpecial", False),
+            ("abc ", "hasSpecial", True),
+        ]
+        for password, key, expected in test_cases:
+            with self.subTest(password=password, key=key):
+                self.assertEqual(criteriaCheck(password)[key], expected)
         
 class test_StrengthValue(unittest.TestCase):
     def setUp(self):
@@ -145,15 +146,15 @@ class test_feedback(unittest.TestCase):
         self.assertEqual(len(sharedValue), 1)
 
 class test_commonlyUsed(unittest.TestCase):
-    def test_common_password(self):
-        self.assertTrue(commonlyUsedCheck("1q2w3e4r5t6y"))
-        self.assertTrue(commonlyUsedCheck("cjkysirj"))
-        self.assertTrue(commonlyUsedCheck("L58jkdjP!"))
+    def test_common_passwords(self):
+        for pwd in ["1q2w3e4r5t6y", "cjkysirj", "L58jkdjP!"]:
+            with self.subTest(password=pwd):
+                self.assertTrue(commonlyUsedCheck(pwd))
     
-    def test_not_common_password(self):
-        self.assertFalse(commonlyUsedCheck("KS%@Ncm34agd692}"))
-        self.assertFalse(commonlyUsedCheck("c@#SkyF982irj"))
-        self.assertFalse(commonlyUsedCheck("J*6was1s@@"))
+    def test_not_common_passwords(self):
+        for pwd in ["KS%@Ncm34agd692}", "c@#SkyF982irj", "J*6was1s@@"]:
+            with self.subTest(password=pwd):
+                self.assertFalse(commonlyUsedCheck(pwd))
         
     @patch('pathlib.Path.is_file', return_value=False)
     @patch('sys.stdout', new_callable=StringIO)
@@ -222,14 +223,11 @@ class test_printResults(unittest.TestCase):
 
 class test_isPasswordStrong(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
-    def test_no_password_given(self,stdout_mock):
-        isPasswordStrong("")
-        self.assertIn("Invalid Password\n", stdout_mock.getvalue())
-
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_only_space_password_given(self,stdout_mock):
-        isPasswordStrong(" ")
-        self.assertIn("Invalid Password\n", stdout_mock.getvalue())
+    def test_invalid_passwords(self, stdout_mock):
+        for invalid_pwd in ["", " "]:
+            with self.subTest(pwd=invalid_pwd):
+                isPasswordStrong(invalid_pwd)
+                self.assertIn("Invalid Password\n", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_call_printResults(self, stdout_mock):
