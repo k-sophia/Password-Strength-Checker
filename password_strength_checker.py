@@ -1,6 +1,7 @@
 import re
 import random
 from pathlib import Path
+from typing import Dict, List, Tuple, Optional
 import argparse
 
 # ==========================================
@@ -37,7 +38,7 @@ SECURITY_RECOMMENDATIONS = [
 # VALIDATION AND EVALUATION
 # ==========================================
 
-def criteriaCheck(password):
+def criteriaCheck(password: str) -> Dict[str, bool]:
     """Evaluates password against length, case, digit, and special character"""
     hasMinLength = len(password) >= 15
     hasLowercase = re.search(r"[a-z]", password) is not None
@@ -55,11 +56,11 @@ def criteriaCheck(password):
         "hasSpecial": hasSpecial
     }
 
-def getStrengthValue(criteriaResults):
+def getStrengthValue(criteriaResults: Dict[str, bool]) -> str:
     """Maps total met criteria to a string of descriptive password strength level"""
     return PASSWORD_STRENGTH_VALUES[sum(criteriaResults.values())]
 
-def getFeedback(criteriaResults):
+def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]:
     """Generates specific criteria improvements and recommendations based on evaluation results"""
     criteriaFeedback = []
     strengthFeedback = []
@@ -84,7 +85,7 @@ def getFeedback(criteriaResults):
         
     return criteriaFeedback, strengthFeedback
 
-def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
+def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> Optional[bool]:
     """Streams through a common password file to check if given password matches"""
     try:
         path = Path(filename)
@@ -118,7 +119,7 @@ def commonlyUsedCheck(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
 # ORCHESTRATION
 # ==========================================
 
-def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
+def printResults(strength: str, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool]) -> None:
     """Formats and displays evaluation results and security recommendations"""
     print("Password Strength: " + strength)
     for c in criteriaFeedback:
@@ -131,10 +132,10 @@ def printResults(strength, criteriaFeedback, strengthFeedback, isCommon):
         print("\nYour password is not in the Seclist top password list being used here.")
    
     print("\nSecurity Recommendations:")
-    for s in strengthFeedback:
+    for s in securityFeedback:
         print(" - " + s)
 
-def isPasswordStrong(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
+def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> None:
     """Validates input constraints and orchestrates workflow"""
     if not password or password.isspace():
             print("Invalid Password")
@@ -151,7 +152,7 @@ def isPasswordStrong(password, filename=DEFAULT_COMMON_PASSWORD_FILE):
 # ARGUMENT PARSING AND MAIN FUNCTION
 # ==========================================
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check password strength.")
     parser.add_argument(
         "--wordlist", 
@@ -160,7 +161,7 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-def main():
+def main() -> None:
     args = parse_arguments()
     
     password = input("Enter Password: ")
