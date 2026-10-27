@@ -45,7 +45,7 @@ def criteriaCheck(password: str) -> Dict[str, bool]:
     hasUppercase = re.search(r"[A-Z]", password) is not None
     hasDigit = re.search(r"\d", password) is not None
     #" !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
-    specialChars = re.compile(' |!|"|#|\$|%|&|\'|\(|\)|\*|\+|,|-|\.|\/|:|;|<|=|>|\?|@|\[|\\|]|\^|_|`|{|\||}|~')
+    specialChars = re.compile(r'[ !"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
     hasSpecial = specialChars.search(password) is not None
     
     return {
@@ -76,7 +76,7 @@ def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]
         criteriaFeedback.append("Must have at least 1 number")
     if not criteriaResults["hasSpecial"]:
         criteriaFeedback.append("Must have at least 1 special character")
-        strengthFeedback.append("OWASP recommends using these characters (between double quotes): \" !\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~\"")
+        strengthFeedback.append(r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"''')
     
     if len(strengthFeedback) < 3:
         newfeedback = random.sample(SECURITY_RECOMMENDATIONS, 3 - len(strengthFeedback))

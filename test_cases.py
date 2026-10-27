@@ -104,7 +104,7 @@ class test_feedback(unittest.TestCase):
         self.criteriaResults["hasSpecial"] = False
         expectedCriteriaFeedback = "Must have at least 1 special character"
         self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-        expectedSecurityFeedback = "OWASP recommends using these characters (between double quotes): \" !\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~\""
+        expectedSecurityFeedback = r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"'''
         self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1])
         
     #check for 3 cases of additional feedback 
