@@ -44,40 +44,23 @@ class test_StrengthValue(unittest.TestCase):
             "hasDigit": False,
             "hasSpecial": False
         }
-    
-    def tearDown(self):
-        del self.criteriaResults
 
-    def test_strength_very_weak(self):
+    def test_strength_all_false_is_very_weak(self):
         self.assertEqual(getStrengthValue(self.criteriaResults), "Very Weak")
-        self.criteriaResults[0] = True
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Very Weak")
+
+    def test_strength_progressive_tiers(self):
+        steps = [
+            ("hasMinLength", "Very Weak"),
+            ("hasLowercase", "Weak"),
+            ("hasUppercase", "Good"),
+            ("hasDigit", "Very Good"),
+            ("hasSpecial", "Strong"),
+        ]
         
-    def test_strength_weak(self):
-        self.criteriaResults[0] = True
-        self.criteriaResults[1] = True
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Weak")
-        
-    def test_strength_good(self):
-        self.criteriaResults[0] = True
-        self.criteriaResults[1] = True
-        self.criteriaResults[2] = True
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Good")
-    
-    def test_strength_very_good(self):
-        self.criteriaResults[0] = True
-        self.criteriaResults[1] = True
-        self.criteriaResults[2] = True
-        self.criteriaResults[3] = True
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Very Good")
-    
-    def test_strength_strong(self):
-        self.criteriaResults[0] = True
-        self.criteriaResults[1] = True
-        self.criteriaResults[2] = True
-        self.criteriaResults[3] = True
-        self.criteriaResults[4] = True
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Strong")
+        for key, expected_strength in steps:
+            self.criteriaResults[key] = True
+            with self.subTest(added_key=key):
+                self.assertEqual(getStrengthValue(self.criteriaResults), expected_strength)
 
 class test_feedback(unittest.TestCase):
     def setUp(self):
