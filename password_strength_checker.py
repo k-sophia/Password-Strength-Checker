@@ -38,7 +38,7 @@ class StrengthTier(str, Enum):
     STRONG = "Strong"
 
     @classmethod
-    def get_strength_value(cls, criteriaResults: Dict[str, bool]) -> "StrengthTier":
+    def getStrengthValue(cls, criteriaResults: Dict[str, bool]) -> "StrengthTier":
         """Maps total met criteria directly to a StrengthTier enum."""
         score = sum(criteriaResults.values())
         
@@ -158,7 +158,7 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
             return
     
     criteriaResults = criteriaCheck(password)
-    strength = StrengthTier.get_strength_value(criteriaResults)
+    strength = StrengthTier.getStrengthValue(criteriaResults)
     criteriaFeedback, strengthFeedback = getFeedback(criteriaResults)
     isCommon = commonlyUsedCheck(password, filename)
 
