@@ -42,14 +42,13 @@ class StrengthTier(str, Enum):
         """Maps total met criteria directly to a StrengthTier enum."""
         score = sum(criteriaResults.values())
         
-        # Defines the tiers in order from 0 to 5 met criteria
         tiers = [
-            cls.VERY_WEAK,
-            cls.WEAK,
-            cls.GOOD,
-            cls.VERY_GOOD,
-            cls.STRONG,
-            cls.STRONG,
+            cls.VERY_WEAK,  # Score 0
+            cls.VERY_WEAK,  # Score 1
+            cls.WEAK,       # Score 2
+            cls.GOOD,       # Score 3
+            cls.VERY_GOOD,  # Score 4
+            cls.STRONG,     # Score 5
         ]
         
         return tiers[score]

@@ -5,7 +5,7 @@ import tempfile
 from password_strength_checker import (
     SECURITY_RECOMMENDATIONS,
     criteriaCheck,
-    getStrengthValue,
+    StrengthTier, 
     getFeedback,
     commonlyUsedCheck,
     printResults,
@@ -46,21 +46,21 @@ class test_StrengthValue(unittest.TestCase):
         }
 
     def test_strength_all_false_is_very_weak(self):
-        self.assertEqual(getStrengthValue(self.criteriaResults), "Very Weak")
+        self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), StrengthTier.VERY_WEAK)
 
     def test_strength_progressive_tiers(self):
         steps = [
-            ("hasMinLength", "Very Weak"),
-            ("hasLowercase", "Weak"),
-            ("hasUppercase", "Good"),
-            ("hasDigit", "Very Good"),
-            ("hasSpecial", "Strong"),
+            ("hasMinLength", StrengthTier.VERY_WEAK),
+            ("hasLowercase", StrengthTier.WEAK),
+            ("hasUppercase", StrengthTier.GOOD),
+            ("hasDigit", StrengthTier.VERY_GOOD),
+            ("hasSpecial", StrengthTier.STRONG),
         ]
         
         for key, expected_strength in steps:
             self.criteriaResults[key] = True
             with self.subTest(added_key=key):
-                self.assertEqual(getStrengthValue(self.criteriaResults), expected_strength)
+                self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), expected_strength)
 
 class test_feedback(unittest.TestCase):
     def setUp(self):
@@ -182,14 +182,14 @@ class test_commonlyUsed(unittest.TestCase):
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_criteria_feedback(self, stdout_mock):
-        printResults("weak", ["test1", "test2"], [], False)
-        self.assertIn("Password Strength: weak", stdout_mock.getvalue())
+        printResults(StrengthTier.WEAK, ["test1", "test2"], [], False)
+        self.assertIn("Password Strength: Weak", stdout_mock.getvalue())
         self.assertIn(" - test1", stdout_mock.getvalue())
         self.assertIn(" - test2", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_common_true(self, stdout_mock):
-        printResults("", [], [], True)
+        printResults(StrengthTier.VERY_WEAK, [], [], True)
         expected_string1 = "\nYour password is among the most commonly used and could be easily cracked."
         self.assertIn(expected_string1, stdout_mock.getvalue())
         expected_string2 = "For your protection, please update it to something more secure!"
@@ -197,13 +197,13 @@ class test_printResults(unittest.TestCase):
         
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_common_false(self, stdout_mock):
-        printResults("", [], [], False)
+        printResults(StrengthTier.VERY_WEAK, [], [], False)
         expected_string = "\nYour password is not in the Seclist top password list being used here."
         self.assertIn(expected_string, stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_print_strength_feedback(self, stdout_mock):
-        printResults("", [], ["test1", "test2"], False)
+        printResults(StrengthTier.VERY_WEAK, [], ["test1", "test2"], False)
         self.assertIn("\nSecurity Recommendations:", stdout_mock.getvalue())
         self.assertIn(" - test1", stdout_mock.getvalue())
         self.assertIn(" - test2", stdout_mock.getvalue())
