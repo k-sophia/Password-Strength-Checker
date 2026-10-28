@@ -1,8 +1,9 @@
-import re
-import random
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 import argparse
+from enum import Enum
+from pathlib import Path
+import random
+import re
+from typing import Dict, List, Optional, Tuple
 
 # ==========================================
 # CONFIGURATION
@@ -11,15 +12,6 @@ import argparse
 DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
-
-PASSWORD_STRENGTH_VALUES = {
-    0 : "Very Weak",
-    1 : "Very Weak",
-    2 : "Weak",
-    3 : "Good",
-    4 : "Very Good",
-    5 : "Strong"
-}
 
 SECURITY_RECOMMENDATIONS = [
     "Though the recommended minimum length is 8, NIST recommends 15 for optimal security",
@@ -33,6 +25,34 @@ SECURITY_RECOMMENDATIONS = [
     "Opt for a passphrase composed of multiple random words to ensure strong security and simple recall",
     "Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'"
 ]
+
+# ==========================================
+# CLASSES
+# ==========================================
+
+class StrengthTier(str, Enum):
+    VERY_WEAK = "Very Weak"
+    WEAK = "Weak"
+    GOOD = "Good"
+    VERY_GOOD = "Very Good"
+    STRONG = "Strong"
+
+    @classmethod
+    def get_strength_value(cls, criteriaResults: Dict[str, bool]) -> "StrengthTier":
+        """Maps total met criteria directly to a StrengthTier enum."""
+        score = sum(criteriaResults.values())
+        
+        # Defines the tiers in order from 0 to 5 met criteria
+        tiers = [
+            cls.VERY_WEAK,
+            cls.WEAK,
+            cls.GOOD,
+            cls.VERY_GOOD,
+            cls.STRONG,
+            cls.STRONG,
+        ]
+        
+        return tiers[score]
 
 # ==========================================
 # VALIDATION AND EVALUATION
@@ -55,10 +75,6 @@ def criteriaCheck(password: str) -> Dict[str, bool]:
         "hasDigit": hasDigit,
         "hasSpecial": hasSpecial
     }
-
-def getStrengthValue(criteriaResults: Dict[str, bool]) -> str:
-    """Maps total met criteria to a string of descriptive password strength level"""
-    return PASSWORD_STRENGTH_VALUES[sum(criteriaResults.values())]
 
 def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]:
     """Generates specific criteria improvements and recommendations based on evaluation results"""
@@ -119,7 +135,7 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
 # ORCHESTRATION
 # ==========================================
 
-def printResults(strength: str, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool]) -> None:
+def printResults(strength: StrengthTier, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool]) -> None:
     """Formats and displays evaluation results and security recommendations"""
     print("Password Strength: " + strength)
     for c in criteriaFeedback:
@@ -142,7 +158,7 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
             return
     
     criteriaResults = criteriaCheck(password)
-    strength = getStrengthValue(criteriaResults)
+    strength = StrengthTier.get_strength_value(criteriaResults)
     criteriaFeedback, strengthFeedback = getFeedback(criteriaResults)
     isCommon = commonlyUsedCheck(password, filename)
 
