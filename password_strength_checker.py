@@ -11,6 +11,8 @@ from typing import Dict, List, Optional, Tuple
 
 DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
 
+SPECIAL_CHARS_PATTERN = re.compile(r'[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]')
+
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
 
 SECURITY_RECOMMENDATIONS = [
@@ -75,8 +77,7 @@ def criteriaCheck(password: str) -> Dict[str, bool]:
     hasLowercase = re.search(r"[a-z]", password) is not None
     hasUppercase = re.search(r"[A-Z]", password) is not None
     hasDigit = re.search(r"\d", password) is not None
-    specialChars = re.compile(r'[ !"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
-    hasSpecial = specialChars.search(password) is not None
+    hasSpecial = SPECIAL_CHARS_PATTERN.search(password) is not None
     
     return {
         "hasMinLength": hasMinLength,
