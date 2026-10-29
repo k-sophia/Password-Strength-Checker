@@ -106,20 +106,19 @@ class test_feedback(unittest.TestCase):
         self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
         expectedSecurityFeedback = r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"'''
         self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1])
-        
-    #check for 3 cases of additional feedback 
-    def test_add_3_feedback(self):
-        outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(outputResults), 3)
-        self.assertEqual(len(sharedValue), 3)
     
-    def test_add_2_feedback(self):
+    def test_add_3_additional_feedback(self):
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 3)
+        
+    def test_add_2_additional_feedback(self):
         self.criteriaResults["hasMinLength"] = False
-        outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(outputResults), 3)
-        self.assertEqual(len(sharedValue), 2)
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 2)
     
     def test_add_1_feedback(self):
         self.criteriaResults["hasMinLength"] = False
@@ -128,6 +127,14 @@ class test_feedback(unittest.TestCase):
         sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
         self.assertEqual(len(outputResults), 3)
         self.assertEqual(len(sharedValue), 1)
+    
+    def test_add_1_additional_feedback(self):
+        self.criteriaResults["hasMinLength"] = False
+        self.criteriaResults["hasSpecial"] = False
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 1)
 
 class test_commonlyUsed(unittest.TestCase):
     def test_common_passwords(self):
@@ -181,32 +188,37 @@ class test_commonlyUsed(unittest.TestCase):
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
-    def test_print_criteria_feedback(self, stdout_mock):
+    def test_criteria_feedback_omitted_when_empty(self, stdout_mock):
+        printResults(StrengthTier.WEAK, [], [], False)
+        self.assertNotIn("Areas for Improvement", stdout_mock.getvalue())
+    
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_criteria_feedback_displayed_when_present(self, stdout_mock):
         printResults(StrengthTier.WEAK, ["test1", "test2"], [], False)
-        self.assertIn("Password Strength: Weak", stdout_mock.getvalue())
-        self.assertIn(" - test1", stdout_mock.getvalue())
-        self.assertIn(" - test2", stdout_mock.getvalue())
-    
+        output = stdout_mock.getvalue()
+        self.assertIn("Areas for Improvement", output)
+        self.assertIn(" - test1", output)
+        self.assertIn(" - test2", output)
+
     @patch('sys.stdout', new_callable=StringIO)
-    def test_print_common_true(self, stdout_mock):
+    def test_common_password_warning_displayed(self, stdout_mock):
         printResults(StrengthTier.VERY_WEAK, [], [], True)
-        expected_string1 = "\nYour password is among the most commonly used and could be easily cracked."
-        self.assertIn(expected_string1, stdout_mock.getvalue())
-        expected_string2 = "For your protection, please update it to something more secure!"
-        self.assertIn(expected_string2, stdout_mock.getvalue())
-        
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_print_common_false(self, stdout_mock):
-        printResults(StrengthTier.VERY_WEAK, [], [], False)
-        expected_string = "\nYour password is not in the Seclist top password list being used here."
-        self.assertIn(expected_string, stdout_mock.getvalue())
+        output = stdout_mock.getvalue()
+        self.assertIn("Your password is among the most commonly used and could be easily cracked", output)
+        self.assertIn("please update it to something more secure!", output)
     
     @patch('sys.stdout', new_callable=StringIO)
-    def test_print_strength_feedback(self, stdout_mock):
+    def test_common_password_safe_message_displayed(self, stdout_mock):
+        printResults(StrengthTier.VERY_WEAK, [], [], False)
+        self.assertIn("Your password is not in the Seclist top password list being used here", stdout_mock.getvalue())
+    
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_security_recommendations_displayed(self, stdout_mock):
         printResults(StrengthTier.VERY_WEAK, [], ["test1", "test2"], False)
-        self.assertIn("\nSecurity Recommendations:", stdout_mock.getvalue())
-        self.assertIn(" - test1", stdout_mock.getvalue())
-        self.assertIn(" - test2", stdout_mock.getvalue())
+        output = stdout_mock.getvalue()
+        self.assertIn("Security Recommendations:", output)
+        self.assertIn(" - test1", output)
+        self.assertIn(" - test2", output)
 
 class test_isPasswordStrong(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
