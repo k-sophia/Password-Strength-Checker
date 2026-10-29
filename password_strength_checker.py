@@ -36,6 +36,18 @@ class StrengthTier(str, Enum):
     GOOD = "Good"
     VERY_GOOD = "Very Good"
     STRONG = "Strong"
+    
+    @property
+    def ansi_color(self) -> str:
+        """Returns the ANSI color code corresponding to the strength tier."""
+        color_map = {
+            self.VERY_WEAK: "\033[91m",           # Red
+            self.WEAK: "\033[38;5;208m",          # Orange
+            self.GOOD: "\033[33m",                # Yellow
+            self.VERY_GOOD: "\033[38;5;71m",      # Green
+            self.STRONG: "\033[1m\033[32m",       # Light Green
+        }
+        return color_map[self]
 
     @classmethod
     def getStrengthValue(cls, criteriaResults: Dict[str, bool]) -> "StrengthTier":
@@ -63,7 +75,6 @@ def criteriaCheck(password: str) -> Dict[str, bool]:
     hasLowercase = re.search(r"[a-z]", password) is not None
     hasUppercase = re.search(r"[A-Z]", password) is not None
     hasDigit = re.search(r"\d", password) is not None
-    #" !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
     specialChars = re.compile(r'[ !"#$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
     hasSpecial = specialChars.search(password) is not None
     
@@ -108,7 +119,7 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
         # 1. Verify it exists and is a real file (not a directory)
         if not path.is_file():
             print(f"\nError: The password list file '{filename}' was not found.")
-            print("Warning: Will run script without common check\n")
+            print("Warning: Will run script without common check")
             return None
         
         # 2. Enforce specific file type (.txt only)
@@ -136,9 +147,13 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
 
 def printResults(strength: StrengthTier, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool]) -> None:
     """Formats and displays evaluation results and security recommendations"""
-    print("Password Strength: " + strength)
-    for c in criteriaFeedback:
-        print(" - " + c)
+    RESET = "\033[0m"
+    print(f"\nPassword Strength: {strength.ansi_color}{strength}{RESET}")
+    
+    if criteriaFeedback:
+        print("\nAreas for Improvement:")
+        for c in criteriaFeedback:
+            print(" - " + c)
         
     if isCommon is True:
         print("\nYour password is among the most commonly used and could be easily cracked.")
