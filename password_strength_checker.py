@@ -89,11 +89,11 @@ def criteriaCheck(password: str) -> Dict[str, bool]:
 def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]:
     """Generates specific criteria improvements and recommendations based on evaluation results"""
     criteriaFeedback = []
-    strengthFeedback = []
+    securityFeedback = []
     
     if not criteriaResults["hasMinLength"]:
         criteriaFeedback.append("Must be at least 15 characters")
-        strengthFeedback.append("NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)")
+        securityFeedback.append("NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)")
     if not criteriaResults["hasLowercase"]:
         criteriaFeedback.append("Must have at least 1 lowercase letter")
     if not criteriaResults["hasUppercase"]:
@@ -102,14 +102,14 @@ def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]
         criteriaFeedback.append("Must have at least 1 number")
     if not criteriaResults["hasSpecial"]:
         criteriaFeedback.append("Must have at least 1 special character")
-        strengthFeedback.append(r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"''')
+        securityFeedback.append(r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"''')
     
-    if len(strengthFeedback) < 3:
-        newfeedback = random.sample(SECURITY_RECOMMENDATIONS, 3 - len(strengthFeedback))
+    if len(securityFeedback) < 3:
+        newfeedback = random.sample(SECURITY_RECOMMENDATIONS, 3 - len(securityFeedback))
         for n in newfeedback:
-            strengthFeedback.append(n)
+            securityFeedback.append(n)
         
-    return criteriaFeedback, strengthFeedback
+    return criteriaFeedback, securityFeedback
 
 def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> Optional[bool]:
     """Streams through a common password file to check if given password matches"""
