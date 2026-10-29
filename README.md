@@ -45,7 +45,10 @@ python3 -m unittest test_cases.py
 ```bash
 $ python3 password_strength_checker.py 
 Enter Password: passwordtest
+
 Password Strength: Very Weak
+
+Areas for Improvement:
  - Must be at least 15 characters
  - Must have at least 1 uppercase letter
  - Must have at least 1 number
@@ -56,16 +59,16 @@ Your password is not in the Seclist top password list being used here.
 Security Recommendations:
  - NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)
  - OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
- - Though the recommended minimum length is 8, NIST recommends 15 for optimal security
+ - Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'
 ```
 
 ### Unit Test Example
 
 ```bash
 $ python3 -m unittest test_cases.py 
-..............................
+............................
 ----------------------------------------------------------------------
-Ran 30 tests in 0.797s
+Ran 28 tests in 0.922s
 
 OK
 ```
