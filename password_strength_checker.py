@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple
 
 DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
 
-SPECIAL_CHARS_PATTERN = re.compile(r'[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]')
+SPECIAL_CHARS_PATTERN = re.compile(r'[ !"#\$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
 
