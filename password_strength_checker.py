@@ -3,6 +3,7 @@ from enum import Enum
 from pathlib import Path
 import random
 import re
+import math
 from typing import Dict, List, Optional, Tuple
 
 # ==========================================
@@ -142,15 +143,49 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
         print(f"An error occurred: {e}")
         return None
 
+def calculateEntropy(password: str) -> Tuple[float, str]:
+    """Calculates the Shannon entropy of a password in bits and returns its rating description."""
+    
+    # Determine character pool size (N) based on included character sets
+    poolSize = 0
+    if re.search(r"[a-z]", password):
+        poolSize += 26
+    if re.search(r"[A-Z]", password):
+        poolSize += 26
+    if re.search(r"\d", password):
+        poolSize += 10
+    if SPECIAL_CHARS_PATTERN.search(password):
+        # Standard ASCII special characters pool approximation (~32-33)
+        poolSize += 32
+    
+    if poolSize == 0:
+        poolSize = len(set(password))
+        
+    # Formula: L * log2(N)
+    entropy = len(password) * math.log2(poolSize) if poolSize > 0 else 0.0
+    entropyRounded = round(entropy, 2)
+    
+    if entropyRounded < 40:
+        entropyRating = "Low (Predictable / Vulnerable)"
+    elif entropyRounded < 60:
+        entropyRating = "Moderate (Acceptable)"
+    elif entropyRounded < 80:
+        entropyRating = "High (Strong Randomness)"
+    else:
+        entropyRating = "Very High (Cryptographic Grade)"
+        
+    return entropyRounded, entropyRating
+
 # ==========================================
 # ORCHESTRATION
 # ==========================================
 
-def printResults(strength: StrengthTier, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool]) -> None:
-    """Formats and displays evaluation results and security recommendations"""
+def printResults(strength: StrengthTier, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool], entropy: float, entropyRating: str) -> None:
+    """Formats and displays evaluation results, entropy, and security recommendations"""
     RESET = "\033[0m"
     print(f"\nPassword Strength: {strength.ansi_color}{strength}{RESET}")
-    
+    print(f"Entropy:           {entropy} bits [{entropyRating}]")
+
     if criteriaFeedback:
         print("\nAreas for Improvement:")
         for c in criteriaFeedback:
@@ -176,8 +211,9 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     strength = StrengthTier.getStrengthValue(criteriaResults)
     criteriaFeedback, strengthFeedback = getFeedback(criteriaResults)
     isCommon = commonlyUsedCheck(password, filename)
+    entropy, entropyRating = calculateEntropy(password)
 
-    printResults(strength, criteriaFeedback, strengthFeedback, isCommon)
+    printResults(strength, criteriaFeedback, strengthFeedback, isCommon, entropy, entropyRating)
 
 # ==========================================
 # ARGUMENT PARSING AND MAIN FUNCTION
