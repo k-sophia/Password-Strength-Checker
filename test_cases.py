@@ -4,19 +4,19 @@ from unittest.mock import patch
 import tempfile
 from password_strength_checker import (
     SECURITY_RECOMMENDATIONS,
-    criteriaCheck,
+    coreCriteriaCheck,
     StrengthTier, 
     getFeedback,
     commonlyUsedCheck,
     calculateEntropy,
-    detectRepetition,
+    advancedCriteriaCheck,
     printResults,
     isPasswordStrong,
     main
 )
 
-class test_criteria(unittest.TestCase):
-    def test_criteria_validations(self):
+class test_core_criteria(unittest.TestCase):
+    def test_core_criteria_validations(self):
         test_cases = [
             # length check
             ("123", "hasMinLength", False),
@@ -35,7 +35,7 @@ class test_criteria(unittest.TestCase):
         ]
         for password, key, expected in test_cases:
             with self.subTest(password=password, key=key):
-                self.assertEqual(criteriaCheck(password)[key], expected)
+                self.assertEqual(coreCriteriaCheck(password)[key], expected)
         
 class test_StrengthValue(unittest.TestCase):
     def setUp(self):
@@ -214,25 +214,37 @@ class test_calculate_entropy(unittest.TestCase):
         self.assertEqual(entropyVal, 0.0)
         self.assertIn("Low", ratingVal)
 
-class test_repetition_detection(unittest.TestCase):
+class test_advanced_criteria(unittest.TestCase):
     def test_repetition_exist(self):
-        self.assertTrue(detectRepetition("paasssssssword"))
-        self.assertTrue(detectRepetition("11112222"))
-        self.assertTrue(detectRepetition("aaaaaa"))
+        self.assertTrue(advancedCriteriaCheck("paasssssssword"))
+        self.assertTrue(advancedCriteriaCheck("11112222"))
+        self.assertTrue(advancedCriteriaCheck("aaaaaa"))
 
     def test_no_repetition(self):
-        self.assertFalse(detectRepetition("K8#mP9$xL2!qR5%v"))
-        self.assertFalse(detectRepetition("Password123!"))
+        self.assertFalse(advancedCriteriaCheck("K8#mP9$xL2!qR5%v"))
+        self.assertFalse(advancedCriteriaCheck("Password123!"))
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_omitted_when_empty(self, stdout_mock):
-        printResults(StrengthTier.WEAK, [], [], False, 48.2, "Moderate (Acceptable)")
+        coreResults = {
+            "strength": StrengthTier.WEAK,
+            "entropy": 48.2,
+            "entropyRating": "Moderate (Acceptable)",
+            "feedback": []
+        }
+        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
         self.assertNotIn("Areas for Improvement", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_displayed_when_present(self, stdout_mock):
-        printResults(StrengthTier.WEAK, ["test1", "test2"], [], False, 48.2, "")
+        coreResults = {
+            "strength": StrengthTier.WEAK,
+            "entropy": 48.2,
+            "entropyRating": "",
+            "feedback": ["test1", "test2"]
+        }
+        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
         output = stdout_mock.getvalue()
         self.assertIn("Areas for Improvement", output)
         self.assertIn(" - test1", output)
@@ -240,19 +252,37 @@ class test_printResults(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_common_password_warning_displayed(self, stdout_mock):
-        printResults(StrengthTier.VERY_WEAK, [], [], True, 48.2, "")
+        coreResults = {
+            "strength": StrengthTier.VERY_WEAK,
+            "entropy": 48.2,
+            "entropyRating": "",
+            "feedback": []
+        }
+        printResults(isCommon=True, coreResults=coreResults, securityFeedback=[])
         output = stdout_mock.getvalue()
         self.assertIn("Your password is among the most commonly used and could be easily cracked", output)
-        self.assertIn("please update it to something more secure!", output)
+        self.assertIn("For your protection, please update it to something more secure!", output)
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_common_password_safe_message_displayed(self, stdout_mock):
-        printResults(StrengthTier.VERY_WEAK, [], [], False, 48.2, "")
+        coreResults = {
+            "strength": StrengthTier.VERY_WEAK,
+            "entropy": 48.2,
+            "entropyRating": "",
+            "feedback": []
+        }
+        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
         self.assertIn("Your password is not in the Seclist top password list being used here", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_security_recommendations_displayed(self, stdout_mock):
-        printResults(StrengthTier.VERY_WEAK, [], ["test1", "test2"], False, 48.2, "")
+        coreResults = {
+            "strength": StrengthTier.VERY_WEAK,
+            "entropy": 48.2,
+            "entropyRating": "",
+            "feedback": []
+        }
+        printResults(isCommon=False, coreResults=coreResults, securityFeedback=["test1", "test2"])
         output = stdout_mock.getvalue()
         self.assertIn("Security Recommendations:", output)
         self.assertIn(" - test1", output)

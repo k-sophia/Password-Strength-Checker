@@ -72,7 +72,37 @@ class StrengthTier(str, Enum):
 # VALIDATION AND EVALUATION
 # ==========================================
 
-def criteriaCheck(password: str) -> Dict[str, bool]:
+def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> Optional[bool]:
+    """Streams through a common password file to check if given password matches"""
+    try:
+        path = Path(filename)
+        
+        # 1. Verify it exists and is a real file (not a directory)
+        if not path.is_file():
+            print(f"\nError: The password list file '{filename}' was not found.")
+            print("Warning: Will run script without common check")
+            return None
+        
+        # 2. Enforce specific file type (.txt only)
+        if path.suffix.lower() != ".txt":
+            print(f"\nError: '{filename}' must be a .txt file.")
+            return None
+        
+        # 3. Size validation guard (Resource Exhaustion protection)
+        if path.stat().st_size > MAX_FILE_SIZE_BYTES:
+            print(f"\nError: File size exceeds the maximum allowed limit (50MB).")
+            return None
+        
+        with open(path, "r", encoding="utf-8") as file:
+            for line in file:
+                if line.strip() == password:
+                    return True
+        return False
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+def coreCriteriaCheck(password: str) -> Dict[str, bool]:
     """Evaluates password against length, case, digit, and special character"""
     hasMinLength = len(password) >= 15
     hasLowercase = re.search(r"[a-z]", password) is not None
@@ -113,36 +143,6 @@ def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]
         
     return criteriaFeedback, securityFeedback
 
-def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> Optional[bool]:
-    """Streams through a common password file to check if given password matches"""
-    try:
-        path = Path(filename)
-        
-        # 1. Verify it exists and is a real file (not a directory)
-        if not path.is_file():
-            print(f"\nError: The password list file '{filename}' was not found.")
-            print("Warning: Will run script without common check")
-            return None
-        
-        # 2. Enforce specific file type (.txt only)
-        if path.suffix.lower() != ".txt":
-            print(f"\nError: '{filename}' must be a .txt file.")
-            return None
-        
-        # 3. Size validation guard (Resource Exhaustion protection)
-        if path.stat().st_size > MAX_FILE_SIZE_BYTES:
-            print(f"\nError: File size exceeds the maximum allowed limit (50MB).")
-            return None
-        
-        with open(path, "r", encoding="utf-8") as file:
-            for line in file:
-                if line.strip() == password:
-                    return True
-        return False
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
-
 def calculateEntropy(password: str) -> Tuple[float, str]:
     """Calculates the Shannon entropy of a password in bits and returns its rating description."""
     
@@ -176,7 +176,7 @@ def calculateEntropy(password: str) -> Tuple[float, str]:
         
     return entropyRounded, entropyRating
 
-def detectRepetition(password: str) -> bool:
+def advancedCriteriaCheck(password: str) -> bool:
     """Detects if a password contains excessive consecutive character repetitions (e.g., 'aaa', '1111')"""
     # Matches any character repeated 3 or more times consecutively
     repetitionPattern = re.compile(r'(.)\1{2,}')
@@ -186,40 +186,51 @@ def detectRepetition(password: str) -> bool:
 # ORCHESTRATION
 # ==========================================
 
-def printResults(strength: StrengthTier, criteriaFeedback: List[str], securityFeedback: List[str], isCommon: Optional[bool], entropy: float, entropyRating: str) -> None:
-    """Formats and displays evaluation results, entropy, and security recommendations"""
-    RESET = "\033[0m"
-    print(f"\nPassword Strength: {strength.ansi_color}{strength}{RESET}")
-    print(f"Entropy:           {entropy} bits [{entropyRating}]")
-
-    if criteriaFeedback:
-        print("\nAreas for Improvement:")
-        for c in criteriaFeedback:
-            print(" - " + c)
-        
+def printResults(isCommon: Optional[bool], coreResults: dict, securityFeedback: list) -> None:
+    """Orchestrates printing of global checks, standard criteria, and security recommendations."""
+    
+    # 1. Global Blacklist Message
     if isCommon is True:
-        print("\nYour password is among the most commonly used and could be easily cracked.")
+        print("\n[!] Your password is among the most commonly used and could be easily cracked.")
         print("For your protection, please update it to something more secure!")
     elif isCommon is False:
         print("\nYour password is not in the Seclist top password list being used here.")
-   
-    print("\nSecurity Recommendations:")
-    for s in securityFeedback:
-        print(" - " + s)
+        
+    # 2. Standard / Core Section
+    print(f"Password Strength: {coreResults['strength'].value}")
+    print(f"Entropy:           {coreResults['entropy']:.2f} bits [{coreResults['entropyRating']}]")
+    if coreResults["feedback"]:
+        print("\nAreas for Improvement:")
+        for item in coreResults["feedback"]:
+            print(f" - {item}")
+            
+    # 3. Global Security Recommendations
+    if securityFeedback:
+        print("\nSecurity Recommendations:")
+        for item in securityFeedback:
+            print(f" - {item}")
 
 def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE) -> None:
     """Validates input constraints and orchestrates workflow"""
     if not password or password.isspace():
-            print("Invalid Password")
-            return
+        print("Invalid Password")
+        return
     
-    criteriaResults = criteriaCheck(password)
-    strength = StrengthTier.getStrengthValue(criteriaResults)
-    criteriaFeedback, strengthFeedback = getFeedback(criteriaResults)
+    # 1. Global Blacklist Check (Prints/Evaluates first)
     isCommon = commonlyUsedCheck(password, filename)
+    
+    # 2. Core Evaluation Package
     entropy, entropyRating = calculateEntropy(password)
+    coreCriteria = coreCriteriaCheck(password)
+    coreFeedback, securityFeedback = getFeedback(coreCriteria)
+    coreResults = {
+        "strength": StrengthTier.getStrengthValue(coreCriteria),
+        "entropy": entropy,
+        "entropyRating": entropyRating,
+        "feedback": coreFeedback
+    }
 
-    printResults(strength, criteriaFeedback, strengthFeedback, isCommon, entropy, entropyRating)
+    printResults(isCommon, coreResults, securityFeedback)
 
 # ==========================================
 # ARGUMENT PARSING AND MAIN FUNCTION
