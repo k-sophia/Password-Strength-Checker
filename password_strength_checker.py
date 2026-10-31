@@ -176,6 +176,12 @@ def calculateEntropy(password: str) -> Tuple[float, str]:
         
     return entropyRounded, entropyRating
 
+def detectRepetition(password: str) -> bool:
+    """Detects if a password contains excessive consecutive character repetitions (e.g., 'aaa', '1111')"""
+    # Matches any character repeated 3 or more times consecutively
+    repetitionPattern = re.compile(r'(.)\1{2,}')
+    return bool(repetitionPattern.search(password))
+
 # ==========================================
 # ORCHESTRATION
 # ==========================================

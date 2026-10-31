@@ -9,6 +9,7 @@ from password_strength_checker import (
     getFeedback,
     commonlyUsedCheck,
     calculateEntropy,
+    detectRepetition,
     printResults,
     isPasswordStrong,
     main
@@ -212,6 +213,16 @@ class test_calculate_entropy(unittest.TestCase):
         entropyVal, ratingVal = calculateEntropy("ééééééééééééééé")
         self.assertEqual(entropyVal, 0.0)
         self.assertIn("Low", ratingVal)
+
+class test_repetition_detection(unittest.TestCase):
+    def test_repetition_exist(self):
+        self.assertTrue(detectRepetition("paasssssssword"))
+        self.assertTrue(detectRepetition("11112222"))
+        self.assertTrue(detectRepetition("aaaaaa"))
+
+    def test_no_repetition(self):
+        self.assertFalse(detectRepetition("K8#mP9$xL2!qR5%v"))
+        self.assertFalse(detectRepetition("Password123!"))
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
