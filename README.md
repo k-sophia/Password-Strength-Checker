@@ -8,6 +8,7 @@ A Python tool that evaluates password strength using best practices outlined by 
 - **Breached Password Blacklist:** Checks passwords against the top common password list via SecLists file
 - **Actionable Feedback:** Delivers clear security feedback and recommendations for any missing criteria
 - **Unit Tested:** Includes comprehensive test suites to validate logic
+- **Shannon Entropy Calculation:** Computes and displays mathematical randomness and brute-force resistance in bits with qualitative ratings
 
 ## 📋 Password Criteria 
 
@@ -47,6 +48,7 @@ $ python3 password_strength_checker.py
 Enter Password: passwordtest
 
 Password Strength: Very Weak
+Entropy:           56.41 bits [Moderate (Acceptable)]
 
 Areas for Improvement:
  - Must be at least 15 characters
