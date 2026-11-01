@@ -41,7 +41,7 @@ class StrengthTier(str, Enum):
     STRONG = "Strong"
     
     @property
-    def ansi_color(self) -> str:
+    def ansiColor(self) -> str:
         """Returns the ANSI color code corresponding to the strength tier."""
         color_map = {
             self.VERY_WEAK: "\033[91m",           # Red
@@ -197,7 +197,9 @@ def printResults(isCommon: Optional[bool], coreResults: dict, securityFeedback: 
         print("\nYour password is not in the Seclist top password list being used here.")
         
     # 2. Standard / Core Section
-    print(f"Password Strength: {coreResults['strength'].value}")
+    strength = coreResults['strength']
+    RESET = "\033[0m"
+    print(f"Password Strength: {strength.ansiColor}{strength}{RESET}")
     print(f"Entropy:           {coreResults['entropy']:.2f} bits [{coreResults['entropyRating']}]")
     if coreResults["feedback"]:
         print("\nAreas for Improvement:")
