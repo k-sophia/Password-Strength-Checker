@@ -38,6 +38,13 @@ class test_core_criteria(unittest.TestCase):
                 self.assertEqual(coreCriteriaCheck(password)[key], expected)
         
 class test_StrengthValue(unittest.TestCase):
+    def test_ansi_color_property(self):
+        self.assertEqual(StrengthTier.VERY_WEAK.ansi_color, "\033[91m")
+        self.assertEqual(StrengthTier.WEAK.ansi_color, "\033[38;5;208m")
+        self.assertEqual(StrengthTier.GOOD.ansi_color, "\033[33m")
+        self.assertEqual(StrengthTier.VERY_GOOD.ansi_color, "\033[38;5;71m")
+        self.assertEqual(StrengthTier.STRONG.ansi_color, "\033[1m\033[32m")
+    
     def setUp(self):
         self.criteriaResults = {
             "hasMinLength": False,
