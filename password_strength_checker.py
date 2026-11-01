@@ -5,6 +5,7 @@ import random
 import re
 import math
 from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 # ==========================================
 # CONFIGURATION
@@ -15,6 +16,8 @@ DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
 SPECIAL_CHARS_PATTERN = re.compile(r'[ !"#\$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
+
+ANSI_RESET = "\033[0m"
 
 SECURITY_RECOMMENDATIONS = [
     "Though the recommended minimum length is 8, NIST recommends 15 for optimal security",
@@ -67,6 +70,13 @@ class StrengthTier(str, Enum):
         ]
         
         return tiers[score]
+    
+@dataclass
+class CriteriaResult:
+    strength: StrengthTier
+    feedback: List[str]
+    entropy: Optional[float] = None
+    entropyRating: Optional[str] = None
 
 # ==========================================
 # VALIDATION AND EVALUATION
@@ -186,7 +196,7 @@ def advancedCriteriaCheck(password: str) -> bool:
 # ORCHESTRATION
 # ==========================================
 
-def printResults(isCommon: Optional[bool], coreResults: dict, securityFeedback: list) -> None:
+def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, securityFeedback: list) -> None:
     """Orchestrates printing of global checks, standard criteria, and security recommendations."""
     
     # 1. Global Blacklist Message
@@ -197,13 +207,12 @@ def printResults(isCommon: Optional[bool], coreResults: dict, securityFeedback: 
         print("\nYour password is not in the Seclist top password list being used here.\n")
         
     # 2. Standard / Core Section
-    strength = coreResults['strength']
-    RESET = "\033[0m"
-    print(f"Password Strength: {strength.ansiColor}{strength}{RESET}")
-    print(f"Entropy:           {coreResults['entropy']:.2f} bits [{coreResults['entropyRating']}]")
-    if coreResults["feedback"]:
+    strength = coreResults.strength
+    print(f"Password Strength: {strength.ansiColor}{strength}{ANSI_RESET}")
+    print(f"Entropy:           {coreResults.entropy:.2f} bits [{coreResults.entropyRating}]")
+    if coreResults.feedback:
         print("\nAreas for Improvement:")
-        for item in coreResults["feedback"]:
+        for item in coreResults.feedback:
             print(f" - {item}")
             
     # 3. Global Security Recommendations
@@ -225,12 +234,12 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     entropy, entropyRating = calculateEntropy(password)
     coreCriteria = coreCriteriaCheck(password)
     coreFeedback, securityFeedback = getFeedback(coreCriteria)
-    coreResults = {
-        "strength": StrengthTier.getStrengthValue(coreCriteria),
-        "entropy": entropy,
-        "entropyRating": entropyRating,
-        "feedback": coreFeedback
-    }
+    coreResults = CriteriaResult(
+        strength=StrengthTier.getStrengthValue(coreCriteria),
+        feedback=coreFeedback,
+        entropy=entropy,
+        entropyRating=entropyRating
+    )
 
     printResults(isCommon, coreResults, securityFeedback)
 

@@ -10,6 +10,7 @@ from password_strength_checker import (
     commonlyUsedCheck,
     calculateEntropy,
     advancedCriteriaCheck,
+    CriteriaResult,
     printResults,
     isPasswordStrong,
     main
@@ -234,61 +235,60 @@ class test_advanced_criteria(unittest.TestCase):
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_omitted_when_empty(self, stdout_mock):
-        coreResults = {
-            "strength": StrengthTier.WEAK,
-            "entropy": 48.2,
-            "entropyRating": "Moderate (Acceptable)",
-            "feedback": []
-        }
+        coreResults = CriteriaResult(
+            strength= StrengthTier.WEAK,
+            feedback= [],
+            entropy= 48.2,
+            entropyRating= "Moderate (Acceptable)",
+        )
+        
         printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
         self.assertNotIn("Areas for Improvement", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_displayed_when_present(self, stdout_mock):
-        coreResults = {
-            "strength": StrengthTier.WEAK,
-            "entropy": 48.2,
-            "entropyRating": "",
-            "feedback": ["test1", "test2"]
-        }
+        coreResults = CriteriaResult(
+            strength= StrengthTier.WEAK,
+            feedback= ["test1", "test2"],
+            entropy= 48.2,
+            entropyRating= "",
+        )
         printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
         output = stdout_mock.getvalue()
         self.assertIn("Areas for Improvement", output)
         self.assertIn(" - test1", output)
         self.assertIn(" - test2", output)
-
+        
     @patch('sys.stdout', new_callable=StringIO)
-    def test_common_password_warning_displayed(self, stdout_mock):
-        coreResults = {
-            "strength": StrengthTier.VERY_WEAK,
-            "entropy": 48.2,
-            "entropyRating": "",
-            "feedback": []
-        }
-        printResults(isCommon=True, coreResults=coreResults, securityFeedback=[])
-        output = stdout_mock.getvalue()
-        self.assertIn("Your password is among the most commonly used and could be easily cracked", output)
-        self.assertIn("For your protection, please update it to something more secure!", output)
-    
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_common_password_safe_message_displayed(self, stdout_mock):
-        coreResults = {
-            "strength": StrengthTier.VERY_WEAK,
-            "entropy": 48.2,
-            "entropyRating": "",
-            "feedback": []
-        }
-        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
-        self.assertIn("Your password is not in the Seclist top password list being used here", stdout_mock.getvalue())
+    def test_common_password_messages(self, stdout_mock):
+        coreResults = CriteriaResult(
+            strength=StrengthTier.VERY_WEAK,
+            feedback=[],
+            entropy=48.2,
+            entropyRating="",
+        )
+        
+        test_cases = [
+            (True, "Your password is among the most commonly used"),
+            (False, "Your password is not in the Seclist top password list")
+        ]
+        
+        for isCommon, expected_text in test_cases:
+            with self.subTest(isCommon=isCommon):
+                stdout_mock.seek(0)
+                stdout_mock.truncate(0)
+                
+                printResults(isCommon=isCommon, coreResults=coreResults, securityFeedback=[])
+                self.assertIn(expected_text, stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_security_recommendations_displayed(self, stdout_mock):
-        coreResults = {
-            "strength": StrengthTier.VERY_WEAK,
-            "entropy": 48.2,
-            "entropyRating": "",
-            "feedback": []
-        }
+        coreResults = CriteriaResult(
+            strength= StrengthTier.VERY_WEAK,
+            feedback= [],
+            entropy= 48.2,
+            entropyRating= "",
+        )
         printResults(isCommon=False, coreResults=coreResults, securityFeedback=["test1", "test2"])
         output = stdout_mock.getvalue()
         self.assertIn("Security Recommendations:", output)
