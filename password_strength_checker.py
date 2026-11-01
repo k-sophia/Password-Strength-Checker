@@ -192,9 +192,9 @@ def printResults(isCommon: Optional[bool], coreResults: dict, securityFeedback: 
     # 1. Global Blacklist Message
     if isCommon is True:
         print("\n[!] Your password is among the most commonly used and could be easily cracked.")
-        print("For your protection, please update it to something more secure!")
+        print("For your protection, please update it to something more secure!\n")
     elif isCommon is False:
-        print("\nYour password is not in the Seclist top password list being used here.")
+        print("\nYour password is not in the Seclist top password list being used here.\n")
         
     # 2. Standard / Core Section
     strength = coreResults['strength']
