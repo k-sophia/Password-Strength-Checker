@@ -223,14 +223,22 @@ class test_calculate_entropy(unittest.TestCase):
         self.assertIn("Low", ratingVal)
 
 class test_advanced_criteria(unittest.TestCase):
-    def test_repetition_exist(self):
-        self.assertTrue(advancedCriteriaCheck("paasssssssword"))
-        self.assertTrue(advancedCriteriaCheck("11112222"))
-        self.assertTrue(advancedCriteriaCheck("aaaaaa"))
-
-    def test_no_repetition(self):
-        self.assertFalse(advancedCriteriaCheck("K8#mP9$xL2!qR5%v"))
-        self.assertFalse(advancedCriteriaCheck("Password123!"))
+    def test_advanced_criteria_validations(self):
+        test_cases = [
+            # repetition check
+            ("qwerty", "hasRepetitions", False),
+            ("111", "hasRepetitions", True),
+            # numeric sequence check
+            ("102938", "hasNumericSequence", False),
+            ("ASC123", "hasNumericSequence", True),
+            ("DESC321", "hasNumericSequence", True),
+            # alphabetic sequence check
+            ("qwerty", "hasAlphabeticalSequence", False),
+            ("abc", "hasAlphabeticalSequence", True),
+        ]
+        for password, key, expected in test_cases:
+            with self.subTest(password=password, key=key):
+                self.assertEqual(advancedCriteriaCheck(password)[key], expected)
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)

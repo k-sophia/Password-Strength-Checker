@@ -186,11 +186,34 @@ def calculateEntropy(password: str) -> Tuple[float, str]:
         
     return entropyRounded, entropyRating
 
-def advancedCriteriaCheck(password: str) -> bool:
-    """Detects if a password contains excessive consecutive character repetitions (e.g., 'aaa', '1111')"""
-    # Matches any character repeated 3 or more times consecutively
-    repetitionPattern = re.compile(r'(.)\1{2,}')
-    return bool(repetitionPattern.search(password))
+def advancedCriteriaCheck(password: str) -> Dict[str, bool]:
+    """Evaluates password against advanced patterns: repetitions and sequences"""
+    
+    # 1. Repetitions (3 or more consecutive identical characters)
+    hasRepetitions = bool(re.search(r'(.)\1{2,}', password))
+    
+    # 2. Numeric sequences (3+ consecutive ascending/descending digits)
+    digits = "1234567890"
+    digitsReverse = digits[::-1]
+    hasNumericSequence = any(
+        digits[i:i+3] in password or digitsReverse[i:i+3] in password 
+        for i in range(len(digits) - 2)
+    )
+    
+    # 3. Alphabetical sequences (3+ consecutive alphabetical letters)
+    lowercasePWD = password.lower()
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    alphabetReverse = alphabet[::-1]
+    hasAlphabeticalSequence = any(
+        alphabet[i:i+3] in lowercasePWD or alphabetReverse[i:i+3] in lowercasePWD 
+        for i in range(len(alphabet) - 2)
+    )
+    
+    return {
+        "hasRepetitions": hasRepetitions,
+        "hasNumericSequence": hasNumericSequence,
+        "hasAlphabeticalSequence": hasAlphabeticalSequence
+    }
 
 # ==========================================
 # ORCHESTRATION
