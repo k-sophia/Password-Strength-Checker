@@ -246,7 +246,7 @@ def getAdvancedFeedback(advancedResults: Dict[str, bool]) -> List[str]:
 # ORCHESTRATION
 # ==========================================
 
-def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, securityFeedback: list) -> None:
+def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, advancedResults: CriteriaResult, securityFeedback: list) -> None:
     """Orchestrates printing of global checks, standard criteria, and security recommendations."""
     
     # 1. Global Blacklist Message
@@ -257,17 +257,29 @@ def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, security
         print("\nYour password is not in the Seclist top password list being used here.\n")
         
     # 2. Standard / Core Section
-    strength = coreResults.strength
-    print(f"Password Strength: {strength.ansiColor}{strength}{ANSI_RESET}")
+    print("=== Password Evaluation ===")
+    coreStrength = coreResults.strength
+    print(f"Password Strength: {coreStrength.ansiColor}{coreStrength}{ANSI_RESET}")
     print(f"Entropy:           {coreResults.entropy:.2f} bits [{coreResults.entropyRating}]")
     if coreResults.feedback:
         print("\nAreas for Improvement:")
         for item in coreResults.feedback:
             print(f" - {item}")
+    
+    # 3. Structural Section
+    print("\n=== Structural Pattern Evaluation ===")
+    advanceStrength = advancedResults.strength
+    print(f"Pattern Quality:   {advanceStrength.ansiColor}{advanceStrength}{ANSI_RESET}")
+    print("Detected Patterns:")
+    if advancedResults.feedback:
+        for item in advancedResults.feedback:
+            print(f" - {item}")
+    else:
+        print(" - No repetitive or sequential patterns detected")
             
-    # 3. Global Security Recommendations
+    # 4. Global Security Recommendations
     if securityFeedback:
-        print("\nSecurity Recommendations:")
+        print("\n=== Security Recommendations ===")
         for item in securityFeedback:
             print(f" - {item}")
 
@@ -277,10 +289,10 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
         print("Invalid Password")
         return
     
-    # 1. Global Blacklist Check (Prints/Evaluates first)
+    # 1. Global Blacklist Check
     isCommon = commonlyUsedCheck(password, filename)
     
-    # Core Evaluation
+    # 2. Core Evaluation
     entropy, entropyRating = calculateEntropy(password)
     coreCriteria = coreCriteriaCheck(password)
     coreFeedback, securityFeedback = getFeedback(coreCriteria)
@@ -290,8 +302,15 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
         entropy=entropy,
         entropyRating=entropyRating
     )
-
-    printResults(isCommon, coreResults, securityFeedback)
+    
+    # 3. Advanced Structural Evaluation
+    advancedCriteria = advancedCriteriaCheck(password)
+    advancedResults = CriteriaResult(
+        strength=StrengthTier.getAdvancedStrengthValue(advancedCriteria),
+        feedback=getAdvancedFeedback(advancedCriteria)
+    )
+    
+    printResults(isCommon, coreResults, advancedResults, securityFeedback)
 
 # ==========================================
 # ARGUMENT PARSING AND MAIN FUNCTION
