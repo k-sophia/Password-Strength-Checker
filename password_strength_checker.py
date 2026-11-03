@@ -296,7 +296,7 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     entropy, entropyRating = calculateEntropy(password)
     criteriaFlags = criteriaCheck(password)
     criteriaFeedback, securityFeedback = getFeedback(criteriaFlags)
-    coreResults = AnalysisResult(
+    criteriaResults = AnalysisResult(
         strength=StrengthTier.getStrengthValue(criteriaFlags),
         feedback=criteriaFeedback,
         entropy=entropy,
@@ -310,7 +310,7 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
         feedback=getStructuralFeedback(structuralFlags)
     )
     
-    printResults(isCommon, coreResults, structuralResults, securityFeedback)
+    printResults(isCommon, criteriaResults, structuralResults, securityFeedback)
 
 # ==========================================
 # ARGUMENT PARSING AND MAIN FUNCTION
