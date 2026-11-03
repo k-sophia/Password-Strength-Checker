@@ -246,7 +246,7 @@ def getStructuralFeedback(advancedResults: Dict[str, bool]) -> List[str]:
 # ORCHESTRATION
 # ==========================================
 
-def printResults(isCommon: Optional[bool], coreResults: AnalysisResult, structuralResults: AnalysisResult, securityFeedback: list) -> None:
+def printResults(isCommon: Optional[bool], criteriaResults: AnalysisResult, structuralResults: AnalysisResult, securityFeedback: list) -> None:
     """Orchestrates printing of global checks, standard criteria, and security recommendations."""
     
     # 1. Global Blacklist Message
@@ -258,12 +258,12 @@ def printResults(isCommon: Optional[bool], coreResults: AnalysisResult, structur
         
     # 2. Standard / Core Section
     print("=== Password Evaluation ===")
-    coreStrength = coreResults.strength
+    coreStrength = criteriaResults.strength
     print(f"Password Strength: {coreStrength.ansiColor}{coreStrength}{ANSI_RESET}")
-    print(f"Entropy:           {coreResults.entropy:.2f} bits [{coreResults.entropyRating}]")
-    if coreResults.feedback:
+    print(f"Entropy:           {criteriaResults.entropy:.2f} bits [{criteriaResults.entropyRating}]")
+    if criteriaResults.feedback:
         print("\nAreas for Improvement:")
-        for item in coreResults.feedback:
+        for item in criteriaResults.feedback:
             print(f" - {item}")
     
     # 3. Structural Section
