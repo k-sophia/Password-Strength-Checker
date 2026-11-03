@@ -16,6 +16,10 @@ from password_strength_checker import (
     main
 )
 
+# ==========================================
+# 1. VALIDATION AND STRENGTH SCORING
+# ==========================================
+
 class test_core_criteria(unittest.TestCase):
     def test_core_criteria_validations(self):
         test_cases = [
@@ -37,7 +41,25 @@ class test_core_criteria(unittest.TestCase):
         for password, key, expected in test_cases:
             with self.subTest(password=password, key=key):
                 self.assertEqual(coreCriteriaCheck(password)[key], expected)
-        
+
+class test_advanced_criteria(unittest.TestCase):
+    def test_advanced_criteria_validations(self):
+        test_cases = [
+            # repetition check
+            ("qwerty", "hasRepetitions", False),
+            ("111", "hasRepetitions", True),
+            # numeric sequence check
+            ("102938", "hasNumericSequence", False),
+            ("ASC123", "hasNumericSequence", True),
+            ("DESC321", "hasNumericSequence", True),
+            # alphabetic sequence check
+            ("qwerty", "hasAlphabeticalSequence", False),
+            ("abc", "hasAlphabeticalSequence", True),
+        ]
+        for password, key, expected in test_cases:
+            with self.subTest(password=password, key=key):
+                self.assertEqual(advancedCriteriaCheck(password)[key], expected)
+
 class test_StrengthValue(unittest.TestCase):
     def test_ansi_color_property(self):
         self.assertEqual(StrengthTier.VERY_WEAK.ansiColor, "\033[91m")
@@ -72,79 +94,35 @@ class test_StrengthValue(unittest.TestCase):
             with self.subTest(added_key=key):
                 self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), expected_strength)
 
-class test_feedback(unittest.TestCase):
-    def setUp(self):
-        self.criteriaResults = {
-            "hasMinLength": True,
-            "hasLowercase": True,
-            "hasUppercase": True,
-            "hasDigit": True,
-            "hasSpecial": True
-        }
-    
-    def tearDown(self):
-        del self.criteriaResults
+class test_calculate_entropy(unittest.TestCase):
+    def test_low_entropy(self):
+        entropyVal, ratingVal = calculateEntropy("aaaaaa")
+        self.assertLess(entropyVal, 30.0)
+        self.assertIn("Low", ratingVal)
 
-    def test_no_criteria_feedback(self):
-        self.assertEqual(getFeedback(self.criteriaResults)[0], [])
-    
-    def test_length_feedback(self):
-        self.criteriaResults["hasMinLength"] = False
-        expectedCriteriaFeedback = "Must be at least 15 characters"
-        self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-        expectedSecurityFeedback = "NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)"
-        self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1])
-    
-    def test_lowercase_feedback(self):
-        self.criteriaResults["hasLowercase"] = False
-        expectedCriteriaFeedback = "Must have at least 1 lowercase letter"
-        self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-    
-    def test_uppercase_feedback(self):
-        self.criteriaResults["hasUppercase"] = False
-        expectedCriteriaFeedback = "Must have at least 1 uppercase letter"
-        self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-    
-    def test_digit_feedback(self):
-        self.criteriaResults["hasDigit"] = False
-        expectedCriteriaFeedback = "Must have at least 1 number"
-        self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-    
-    def test_special_feedback(self):
-        self.criteriaResults["hasSpecial"] = False
-        expectedCriteriaFeedback = "Must have at least 1 special character"
-        self.assertIn(expectedCriteriaFeedback, getFeedback(self.criteriaResults)[0])
-        expectedSecurityFeedback = r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"'''
-        self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1])
-    
-    def test_add_3_additional_feedback(self):
-        securityFeedback = getFeedback(self.criteriaResults)[1]
-        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(securityFeedback), 3)
-        self.assertEqual(len(sharedFeedback), 3)
-        
-    def test_add_2_additional_feedback(self):
-        self.criteriaResults["hasMinLength"] = False
-        securityFeedback = getFeedback(self.criteriaResults)[1]
-        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(securityFeedback), 3)
-        self.assertEqual(len(sharedFeedback), 2)
-    
-    def test_add_1_feedback(self):
-        self.criteriaResults["hasMinLength"] = False
-        self.criteriaResults["hasSpecial"] = False
-        outputResults = getFeedback(self.criteriaResults)[1]
-        sharedValue = set(outputResults) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(outputResults), 3)
-        self.assertEqual(len(sharedValue), 1)
-    
-    def test_add_1_additional_feedback(self):
-        self.criteriaResults["hasMinLength"] = False
-        self.criteriaResults["hasSpecial"] = False
-        securityFeedback = getFeedback(self.criteriaResults)[1]
-        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
-        self.assertEqual(len(securityFeedback), 3)
-        self.assertEqual(len(sharedFeedback), 1)
+    def test_moderate_entropy(self):
+        entropyVal, ratingVal = calculateEntropy("abcdefghijkl")
+        self.assertTrue(40.0 <= entropyVal < 60.0)
+        self.assertIn("Moderate", ratingVal)
+
+    def test_high_entropy(self):
+        entropyVal, ratingVal = calculateEntropy("Abcdef123456")
+        self.assertTrue(60.0 <= entropyVal < 80.0)
+        self.assertIn("High", ratingVal)
+
+    def test_very_high_entropy(self):
+        entropyVal, ratingVal = calculateEntropy("K8#mP9$xL2!qR5%v")
+        self.assertGreaterEqual(entropyVal, 80.0)
+        self.assertIn("Very High", ratingVal)
+
+    def test_fallback_pool_size(self):
+        entropyVal, ratingVal = calculateEntropy("ééééééééééééééé")
+        self.assertEqual(entropyVal, 0.0)
+        self.assertIn("Low", ratingVal)
+
+# ==========================================
+# 2. EXTERNAL CHECKS AND FEEDBACK
+# ==========================================
 
 class test_commonlyUsed(unittest.TestCase):
     def test_common_passwords(self):
@@ -196,49 +174,69 @@ class test_commonlyUsed(unittest.TestCase):
         expected_string = "An error occurred: Permission denied"
         self.assertIn(expected_string, stdout_mock.getvalue())
 
-class test_calculate_entropy(unittest.TestCase):
-    def test_low_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("aaaaaa")
-        self.assertLess(entropyVal, 30.0)
-        self.assertIn("Low", ratingVal)
+class test_feedback(unittest.TestCase):
+    def setUp(self):
+        self.criteriaResults = {
+            "hasMinLength": True,
+            "hasLowercase": True,
+            "hasUppercase": True,
+            "hasDigit": True,
+            "hasSpecial": True
+        }
+    
+    def tearDown(self):
+        del self.criteriaResults
 
-    def test_moderate_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("abcdefghijkl")
-        self.assertTrue(40.0 <= entropyVal < 60.0)
-        self.assertIn("Moderate", ratingVal)
+    def test_no_criteria_feedback(self):
+        self.assertEqual(getFeedback(self.criteriaResults)[0], [])
+    
+    def test_length_feedback(self):
+        self.criteriaResults["hasMinLength"] = False
+        self.assertIn("Must be at least 15 characters", getFeedback(self.criteriaResults)[0])
+        self.assertIn("NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)", getFeedback(self.criteriaResults)[1])
+    
+    def test_lowercase_feedback(self):
+        self.criteriaResults["hasLowercase"] = False
+        self.assertIn("Must have at least 1 lowercase letter", getFeedback(self.criteriaResults)[0])
+    
+    def test_uppercase_feedback(self):
+        self.criteriaResults["hasUppercase"] = False
+        self.assertIn("Must have at least 1 uppercase letter", getFeedback(self.criteriaResults)[0])
+    
+    def test_digit_feedback(self):
+        self.criteriaResults["hasDigit"] = False
+        self.assertIn("Must have at least 1 number", getFeedback(self.criteriaResults)[0])
+    
+    def test_special_feedback(self):
+        self.criteriaResults["hasSpecial"] = False
+        self.assertIn("Must have at least 1 special character", getFeedback(self.criteriaResults)[0])
+        expectedSecurityFeedback = r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"'''
+        self.assertIn(expectedSecurityFeedback, getFeedback(self.criteriaResults)[1])
+    
+    def test_add_3_additional_feedback(self):
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 3)
+        
+    def test_add_2_additional_feedback(self):
+        self.criteriaResults["hasMinLength"] = False
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 2)
+    
+    def test_add_1_additional_feedback(self):
+        self.criteriaResults["hasMinLength"] = False
+        self.criteriaResults["hasSpecial"] = False
+        securityFeedback = getFeedback(self.criteriaResults)[1]
+        sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
+        self.assertEqual(len(securityFeedback), 3)
+        self.assertEqual(len(sharedFeedback), 1)
 
-    def test_high_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("Abcdef123456")
-        self.assertTrue(60.0 <= entropyVal < 80.0)
-        self.assertIn("High", ratingVal)
-
-    def test_very_high_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("K8#mP9$xL2!qR5%v")
-        self.assertGreaterEqual(entropyVal, 80.0)
-        self.assertIn("Very High", ratingVal)
-
-    def test_fallback_pool_size(self):
-        entropyVal, ratingVal = calculateEntropy("ééééééééééééééé")
-        self.assertEqual(entropyVal, 0.0)
-        self.assertIn("Low", ratingVal)
-
-class test_advanced_criteria(unittest.TestCase):
-    def test_advanced_criteria_validations(self):
-        test_cases = [
-            # repetition check
-            ("qwerty", "hasRepetitions", False),
-            ("111", "hasRepetitions", True),
-            # numeric sequence check
-            ("102938", "hasNumericSequence", False),
-            ("ASC123", "hasNumericSequence", True),
-            ("DESC321", "hasNumericSequence", True),
-            # alphabetic sequence check
-            ("qwerty", "hasAlphabeticalSequence", False),
-            ("abc", "hasAlphabeticalSequence", True),
-        ]
-        for password, key, expected in test_cases:
-            with self.subTest(password=password, key=key):
-                self.assertEqual(advancedCriteriaCheck(password)[key], expected)
+# ==========================================
+# 3. ORCHESTRATION
+# ==========================================
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
