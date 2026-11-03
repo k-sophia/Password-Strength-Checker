@@ -72,9 +72,9 @@ class StrengthTier(str, Enum):
         return tiers[score]
     
     @classmethod
-    def getAdvancedStrengthValue(cls, advancedResults: Dict[str, bool]) -> "StrengthTier":
-        """Maps advanced criteria structural flaws directly to a StrengthTier enum."""
-        flawCount = sum(advancedResults.values())
+    def getStructuralStrengthValue(cls, structuralResults: Dict[str, bool]) -> "StrengthTier":
+        """Maps structural pattern flaws directly to a StrengthTier enum."""
+        flawCount = sum(structuralResults.values())
         
         tiers = [
             cls.STRONG, 
@@ -86,7 +86,7 @@ class StrengthTier(str, Enum):
         return tiers[min(flawCount, 3)]
     
 @dataclass
-class CriteriaResult:
+class AnalysisResult:
     strength: StrengthTier
     feedback: List[str]
     entropy: Optional[float] = None
@@ -126,7 +126,7 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
         print(f"An error occurred: {e}")
         return None
 
-def coreCriteriaCheck(password: str) -> Dict[str, bool]:
+def criteriaCheck(password: str) -> Dict[str, bool]:
     """Evaluates password against length, case, digit, and special character"""
     hasMinLength = len(password) >= 15
     hasLowercase = re.search(r"[a-z]", password) is not None
@@ -200,7 +200,7 @@ def calculateEntropy(password: str) -> Tuple[float, str]:
         
     return entropyRounded, entropyRating
 
-def advancedCriteriaCheck(password: str) -> Dict[str, bool]:
+def analyzeStructuralPatterns(password: str) -> Dict[str, bool]:
     """Evaluates password against advanced patterns: repetitions and sequences"""
     
     # 1. Repetitions (3 or more consecutive identical characters)
@@ -229,8 +229,8 @@ def advancedCriteriaCheck(password: str) -> Dict[str, bool]:
         "hasAlphabeticalSequence": hasAlphabeticalSequence
     }
 
-def getAdvancedFeedback(advancedResults: Dict[str, bool]) -> List[str]:
-    """Generates specific structural feedback based on advanced criteria evaluation."""
+def getStructuralFeedback(advancedResults: Dict[str, bool]) -> List[str]:
+    """Generates specific structural feedback based on pattern analysis."""
     advancedFeedback = []
     
     if advancedResults["hasRepetitions"]:
@@ -246,7 +246,7 @@ def getAdvancedFeedback(advancedResults: Dict[str, bool]) -> List[str]:
 # ORCHESTRATION
 # ==========================================
 
-def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, advancedResults: CriteriaResult, securityFeedback: list) -> None:
+def printResults(isCommon: Optional[bool], coreResults: AnalysisResult, structuralResults: AnalysisResult, securityFeedback: list) -> None:
     """Orchestrates printing of global checks, standard criteria, and security recommendations."""
     
     # 1. Global Blacklist Message
@@ -267,12 +267,12 @@ def printResults(isCommon: Optional[bool], coreResults: CriteriaResult, advanced
             print(f" - {item}")
     
     # 3. Structural Section
-    print("\n=== Structural Pattern Evaluation ===")
-    advanceStrength = advancedResults.strength
-    print(f"Pattern Quality:   {advanceStrength.ansiColor}{advanceStrength}{ANSI_RESET}")
-    print("Detected Patterns:")
-    if advancedResults.feedback:
-        for item in advancedResults.feedback:
+    print("\n=== Structural Risks ===")
+    structuralStrength = structuralResults.strength
+    print(f"Pattern Quality:   {structuralStrength.ansiColor}{structuralStrength}{ANSI_RESET}")
+    print("\nDetected Patterns:")
+    if structuralResults.feedback:
+        for item in structuralResults.feedback:
             print(f" - {item}")
     else:
         print(" - No repetitive or sequential patterns detected")
@@ -292,25 +292,25 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     # 1. Global Blacklist Check
     isCommon = commonlyUsedCheck(password, filename)
     
-    # 2. Core Evaluation
+    # 2. Standard Criteria Evaluation
     entropy, entropyRating = calculateEntropy(password)
-    coreCriteria = coreCriteriaCheck(password)
-    coreFeedback, securityFeedback = getFeedback(coreCriteria)
-    coreResults = CriteriaResult(
-        strength=StrengthTier.getStrengthValue(coreCriteria),
-        feedback=coreFeedback,
+    criteriaFlags = criteriaCheck(password)
+    criteriaFeedback, securityFeedback = getFeedback(criteriaFlags)
+    coreResults = AnalysisResult(
+        strength=StrengthTier.getStrengthValue(criteriaFlags),
+        feedback=criteriaFeedback,
         entropy=entropy,
         entropyRating=entropyRating
     )
     
-    # 3. Advanced Structural Evaluation
-    advancedCriteria = advancedCriteriaCheck(password)
-    advancedResults = CriteriaResult(
-        strength=StrengthTier.getAdvancedStrengthValue(advancedCriteria),
-        feedback=getAdvancedFeedback(advancedCriteria)
+    # 3. Structural Pattern Analysis
+    structuralFlags = analyzeStructuralPatterns(password)
+    structuralResults = AnalysisResult(
+        strength=StrengthTier.getStructuralStrengthValue(structuralFlags),
+        feedback=getStructuralFeedback(structuralFlags)
     )
     
-    printResults(isCommon, coreResults, advancedResults, securityFeedback)
+    printResults(isCommon, coreResults, structuralResults, securityFeedback)
 
 # ==========================================
 # ARGUMENT PARSING AND MAIN FUNCTION
