@@ -71,6 +71,20 @@ class StrengthTier(str, Enum):
         
         return tiers[score]
     
+    @classmethod
+    def getAdvancedStrengthValue(cls, advancedResults: Dict[str, bool]) -> "StrengthTier":
+        """Maps advanced criteria structural flaws directly to a StrengthTier enum."""
+        flawCount = sum(advancedResults.values())
+        
+        tiers = [
+            cls.STRONG, 
+            cls.GOOD, 
+            cls.WEAK, 
+            cls.VERY_WEAK
+        ]
+        
+        return tiers[min(flawCount, 3)]
+    
 @dataclass
 class CriteriaResult:
     strength: StrengthTier
@@ -215,6 +229,19 @@ def advancedCriteriaCheck(password: str) -> Dict[str, bool]:
         "hasAlphabeticalSequence": hasAlphabeticalSequence
     }
 
+def getAdvancedFeedback(advancedResults: Dict[str, bool]) -> List[str]:
+    """Generates specific structural feedback based on advanced criteria evaluation."""
+    advancedFeedback = []
+    
+    if advancedResults["hasRepetitions"]:
+        advancedFeedback.append("Contains 3 or more consecutive identical characters (e.g., 'aaa' or '111')")
+    if advancedResults["hasNumericSequence"]:
+        advancedFeedback.append("Contains numeric sequences (e.g., '123' or '890')")
+    if advancedResults["hasAlphabeticalSequence"]:
+        advancedFeedback.append("Contains alphabetical sequences (e.g., 'abc' or 'zyx')")
+    
+    return advancedFeedback
+
 # ==========================================
 # ORCHESTRATION
 # ==========================================
@@ -253,7 +280,7 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     # 1. Global Blacklist Check (Prints/Evaluates first)
     isCommon = commonlyUsedCheck(password, filename)
     
-    # 2. Core Evaluation Package
+    # Core Evaluation
     entropy, entropyRating = calculateEntropy(password)
     coreCriteria = coreCriteriaCheck(password)
     coreFeedback, securityFeedback = getFeedback(coreCriteria)
