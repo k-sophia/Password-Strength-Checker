@@ -5,12 +5,12 @@ import tempfile
 from password_strength_checker import (
     SECURITY_RECOMMENDATIONS,
     StrengthTier,
-    CriteriaResult,
-    coreCriteriaCheck,
-    advancedCriteriaCheck,
+    AnalysisResult,
+    criteriaCheck,
+    analyzeStructuralPatterns,
     calculateEntropy,
     getFeedback,
-    getAdvancedFeedback,
+    getStructuralFeedback,
     commonlyUsedCheck,
     printResults,
     isPasswordStrong,
@@ -21,8 +21,8 @@ from password_strength_checker import (
 # 1. VALIDATION AND STRENGTH SCORING
 # ==========================================
 
-class test_core_criteria(unittest.TestCase):
-    def test_core_criteria_validations(self):
+class test_criteriaCheck(unittest.TestCase):
+    def test_criteria_validations(self):
         test_cases = [
             # length check
             ("123", "hasMinLength", False),
@@ -35,16 +35,16 @@ class test_core_criteria(unittest.TestCase):
             # digit check
             ("abc", "hasDigit", False),
             ("abc1", "hasDigit", True),
-            # special char checl
+            # special char check
             ("abc", "hasSpecial", False),
             ("abc ", "hasSpecial", True),
         ]
         for password, key, expected in test_cases:
             with self.subTest(password=password, key=key):
-                self.assertEqual(coreCriteriaCheck(password)[key], expected)
+                self.assertEqual(criteriaCheck(password)[key], expected)
 
-class test_advanced_criteria(unittest.TestCase):
-    def test_advanced_criteria_validations(self):
+class test_analyzeStructuralPatterns(unittest.TestCase):
+    def test_structural_pattern_validations(self):
         test_cases = [
             # repetition check
             ("qwerty", "hasRepetitions", False),
@@ -59,7 +59,7 @@ class test_advanced_criteria(unittest.TestCase):
         ]
         for password, key, expected in test_cases:
             with self.subTest(password=password, key=key):
-                self.assertEqual(advancedCriteriaCheck(password)[key], expected)
+                self.assertEqual(analyzeStructuralPatterns(password)[key], expected)
 
 class test_StrengthValue(unittest.TestCase):
     def test_ansi_color_property(self):
@@ -78,16 +78,16 @@ class test_StrengthValue(unittest.TestCase):
             "hasSpecial": False
         }
         
-        self.advancedCriteriaResults = {
+        self.structuralResults = {
             "hasRepetitions": False,
             "hasNumericSequence": False,
             "hasAlphabeticalSequence": False
         }
 
-    def test_strength_all_false_is_very_weak(self):
+    def test_criteria_strength_all_false(self):
         self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), StrengthTier.VERY_WEAK)
 
-    def test_strength_progressive_tiers(self):
+    def test_criteria_strength_progressive_tiers(self):
         steps = [
             ("hasMinLength", StrengthTier.VERY_WEAK),
             ("hasLowercase", StrengthTier.WEAK),
@@ -101,21 +101,21 @@ class test_StrengthValue(unittest.TestCase):
             with self.subTest(added_key=key):
                 self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), expected_strength)
 
-    def test_advanced_strength_all_false_is_strong(self):
-        self.assertEqual(StrengthTier.getAdvancedStrengthValue(self.advancedCriteriaResults), StrengthTier.STRONG)
+    def test_structural_strength_all_false(self):
+        self.assertEqual(StrengthTier.getStructuralStrengthValue(self.structuralResults), StrengthTier.STRONG)
 
-    def test_advanced_strength_progressive_tiers(self):
+    def test_structural_strength_progressive_tiers(self):
         steps = [
             ("hasRepetitions", StrengthTier.GOOD),
             ("hasNumericSequence", StrengthTier.WEAK),
             ("hasAlphabeticalSequence", StrengthTier.VERY_WEAK),
         ]
         for key, expected_strength in steps:
-            self.advancedCriteriaResults[key] = True
+            self.structuralResults[key] = True
             with self.subTest(added_key=key):
-                self.assertEqual(StrengthTier.getAdvancedStrengthValue(self.advancedCriteriaResults), expected_strength)
+                self.assertEqual(StrengthTier.getStructuralStrengthValue(self.structuralResults), expected_strength)
 
-class test_calculate_entropy(unittest.TestCase):
+class test_calculateEntropy(unittest.TestCase):
     def test_low_entropy(self):
         entropyVal, ratingVal = calculateEntropy("aaaaaa")
         self.assertLess(entropyVal, 30.0)
@@ -195,7 +195,7 @@ class test_commonlyUsed(unittest.TestCase):
         expected_string = "An error occurred: Permission denied"
         self.assertIn(expected_string, stdout_mock.getvalue())
 
-class test_feedback(unittest.TestCase):
+class test_getFeedback(unittest.TestCase):
     def setUp(self):
         self.criteriaResults = {
             "hasMinLength": True,
@@ -255,31 +255,31 @@ class test_feedback(unittest.TestCase):
         self.assertEqual(len(securityFeedback), 3)
         self.assertEqual(len(sharedFeedback), 1)
 
-class test_advanced_feedback(unittest.TestCase):
+class test_getStructuralFeedback(unittest.TestCase):
     def setUp(self):
-        self.advancedCriteriaResults = {
+        self.structuralResults = {
             "hasRepetitions": False,
             "hasNumericSequence": False,
             "hasAlphabeticalSequence": False
         }
 
     def test_no_advanced_feedback_when_clean(self):
-        self.assertEqual(getAdvancedFeedback(self.advancedCriteriaResults), [])
+        self.assertEqual(getStructuralFeedback(self.structuralResults), [])
 
     def test_repetition_feedback(self):
-        self.advancedCriteriaResults["hasRepetitions"] = True
+        self.structuralResults["hasRepetitions"] = True
         expected = "Contains 3 or more consecutive identical characters (e.g., 'aaa' or '111')"
-        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
+        self.assertIn(expected, getStructuralFeedback(self.structuralResults))
 
     def test_numeric_sequence_feedback(self):
-        self.advancedCriteriaResults["hasNumericSequence"] = True
+        self.structuralResults["hasNumericSequence"] = True
         expected = "Contains numeric sequences (e.g., '123' or '890')"
-        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
+        self.assertIn(expected, getStructuralFeedback(self.structuralResults))
 
     def test_alphabetical_sequence_feedback(self):
-        self.advancedCriteriaResults["hasAlphabeticalSequence"] = True
+        self.structuralResults["hasAlphabeticalSequence"] = True
         expected = "Contains alphabetical sequences (e.g., 'abc' or 'zyx')"
-        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
+        self.assertIn(expected, getStructuralFeedback(self.structuralResults))
 
 # ==========================================
 # 3. ORCHESTRATION
@@ -288,25 +288,34 @@ class test_advanced_feedback(unittest.TestCase):
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_omitted_when_empty(self, stdout_mock):
-        coreResults = CriteriaResult(
-            strength= StrengthTier.WEAK,
-            feedback= [],
-            entropy= 48.2,
-            entropyRating= "Moderate (Acceptable)",
+        criteriaResults = AnalysisResult(
+            strength=StrengthTier.WEAK,
+            feedback=[],
+            entropy=48.2,
+            entropyRating="",
+        )
+        structuralResults = AnalysisResult(
+            strength=StrengthTier.WEAK,
+            feedback=[]
         )
         
-        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
+        printResults(False, criteriaResults, structuralResults, [])
         self.assertNotIn("Areas for Improvement", stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_criteria_feedback_displayed_when_present(self, stdout_mock):
-        coreResults = CriteriaResult(
-            strength= StrengthTier.WEAK,
-            feedback= ["test1", "test2"],
-            entropy= 48.2,
-            entropyRating= "",
+        criteriaResults = AnalysisResult(
+            strength=StrengthTier.WEAK,
+            feedback=["test1", "test2"],
+            entropy=48.2,
+            entropyRating="",
         )
-        printResults(isCommon=False, coreResults=coreResults, securityFeedback=[])
+        structuralResults = AnalysisResult(
+            strength=StrengthTier.WEAK,
+            feedback=[]
+        )
+        
+        printResults(False, criteriaResults, structuralResults, [])
         output = stdout_mock.getvalue()
         self.assertIn("Areas for Improvement", output)
         self.assertIn(" - test1", output)
@@ -314,11 +323,15 @@ class test_printResults(unittest.TestCase):
         
     @patch('sys.stdout', new_callable=StringIO)
     def test_common_password_messages(self, stdout_mock):
-        coreResults = CriteriaResult(
+        criteriaResults = AnalysisResult(
             strength=StrengthTier.VERY_WEAK,
             feedback=[],
             entropy=48.2,
             entropyRating="",
+        )
+        structuralResults = AnalysisResult(
+            strength=StrengthTier.VERY_WEAK,
+            feedback=[]
         )
         
         test_cases = [
@@ -331,20 +344,25 @@ class test_printResults(unittest.TestCase):
                 stdout_mock.seek(0)
                 stdout_mock.truncate(0)
                 
-                printResults(isCommon=isCommon, coreResults=coreResults, securityFeedback=[])
+                printResults(isCommon, criteriaResults, structuralResults, [])
                 self.assertIn(expected_text, stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_security_recommendations_displayed(self, stdout_mock):
-        coreResults = CriteriaResult(
-            strength= StrengthTier.VERY_WEAK,
-            feedback= [],
-            entropy= 48.2,
-            entropyRating= "",
+        criteriaResults = AnalysisResult(
+            strength=StrengthTier.VERY_WEAK,
+            feedback=[],
+            entropy=48.2,
+            entropyRating="",
         )
-        printResults(isCommon=False, coreResults=coreResults, securityFeedback=["test1", "test2"])
+        structuralResults = AnalysisResult(
+            strength=StrengthTier.VERY_WEAK,
+            feedback=[]
+        )
+        
+        printResults(False, criteriaResults, structuralResults, securityFeedback=["test1", "test2"])
         output = stdout_mock.getvalue()
-        self.assertIn("Security Recommendations:", output)
+        self.assertIn("=== Security Recommendations ===", output)
         self.assertIn(" - test1", output)
         self.assertIn(" - test2", output)
 
@@ -360,7 +378,7 @@ class test_isPasswordStrong(unittest.TestCase):
     def test_call_printResults(self, stdout_mock):
         isPasswordStrong("password")
         self.assertIn("Password Strength:", stdout_mock.getvalue())
-        self.assertIn("\nSecurity Recommendations:", stdout_mock.getvalue())
+        self.assertIn("\n=== Security Recommendations ===", stdout_mock.getvalue())
         
 class test_main(unittest.TestCase):
     @patch('sys.argv', ['password_strength_checker.py'])
