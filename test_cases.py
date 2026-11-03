@@ -4,13 +4,14 @@ from unittest.mock import patch
 import tempfile
 from password_strength_checker import (
     SECURITY_RECOMMENDATIONS,
-    coreCriteriaCheck,
-    StrengthTier, 
-    getFeedback,
-    commonlyUsedCheck,
-    calculateEntropy,
-    advancedCriteriaCheck,
+    StrengthTier,
     CriteriaResult,
+    coreCriteriaCheck,
+    advancedCriteriaCheck,
+    calculateEntropy,
+    getFeedback,
+    getAdvancedFeedback,
+    commonlyUsedCheck,
     printResults,
     isPasswordStrong,
     main
@@ -76,6 +77,12 @@ class test_StrengthValue(unittest.TestCase):
             "hasDigit": False,
             "hasSpecial": False
         }
+        
+        self.advancedCriteriaResults = {
+            "hasRepetitions": False,
+            "hasNumericSequence": False,
+            "hasAlphabeticalSequence": False
+        }
 
     def test_strength_all_false_is_very_weak(self):
         self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), StrengthTier.VERY_WEAK)
@@ -93,6 +100,20 @@ class test_StrengthValue(unittest.TestCase):
             self.criteriaResults[key] = True
             with self.subTest(added_key=key):
                 self.assertEqual(StrengthTier.getStrengthValue(self.criteriaResults), expected_strength)
+
+    def test_advanced_strength_all_false_is_strong(self):
+        self.assertEqual(StrengthTier.getAdvancedStrengthValue(self.advancedCriteriaResults), StrengthTier.STRONG)
+
+    def test_advanced_strength_progressive_tiers(self):
+        steps = [
+            ("hasRepetitions", StrengthTier.GOOD),
+            ("hasNumericSequence", StrengthTier.WEAK),
+            ("hasAlphabeticalSequence", StrengthTier.VERY_WEAK),
+        ]
+        for key, expected_strength in steps:
+            self.advancedCriteriaResults[key] = True
+            with self.subTest(added_key=key):
+                self.assertEqual(StrengthTier.getAdvancedStrengthValue(self.advancedCriteriaResults), expected_strength)
 
 class test_calculate_entropy(unittest.TestCase):
     def test_low_entropy(self):
@@ -233,6 +254,32 @@ class test_feedback(unittest.TestCase):
         sharedFeedback = set(securityFeedback) & set(SECURITY_RECOMMENDATIONS)
         self.assertEqual(len(securityFeedback), 3)
         self.assertEqual(len(sharedFeedback), 1)
+
+class test_advanced_feedback(unittest.TestCase):
+    def setUp(self):
+        self.advancedCriteriaResults = {
+            "hasRepetitions": False,
+            "hasNumericSequence": False,
+            "hasAlphabeticalSequence": False
+        }
+
+    def test_no_advanced_feedback_when_clean(self):
+        self.assertEqual(getAdvancedFeedback(self.advancedCriteriaResults), [])
+
+    def test_repetition_feedback(self):
+        self.advancedCriteriaResults["hasRepetitions"] = True
+        expected = "Contains 3 or more consecutive identical characters (e.g., 'aaa' or '111')"
+        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
+
+    def test_numeric_sequence_feedback(self):
+        self.advancedCriteriaResults["hasNumericSequence"] = True
+        expected = "Contains numeric sequences (e.g., '123' or '890')"
+        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
+
+    def test_alphabetical_sequence_feedback(self):
+        self.advancedCriteriaResults["hasAlphabeticalSequence"] = True
+        expected = "Contains alphabetical sequences (e.g., 'abc' or 'zyx')"
+        self.assertIn(expected, getAdvancedFeedback(self.advancedCriteriaResults))
 
 # ==========================================
 # 3. ORCHESTRATION
