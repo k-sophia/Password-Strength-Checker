@@ -286,38 +286,31 @@ class test_getStructuralFeedback(unittest.TestCase):
 # ==========================================
 
 class test_printResults(unittest.TestCase):
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_feedback_omitted_when_empty(self, stdout_mock):
-        criteriaResults = AnalysisResult(
+    def setUp(self):
+        self.criteriaResults = AnalysisResult(
             strength=StrengthTier.WEAK,
             feedback=[],
             entropy=48.2,
-            entropyRating="",
+            entropyRating="Moderate (Acceptable)",
         )
-        structuralResults = AnalysisResult(
+        self.structuralResults = AnalysisResult(
             strength=StrengthTier.WEAK,
             feedback=[]
         )
-        
-        printResults(False, criteriaResults, structuralResults, [])
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_feedback_omitted_when_empty(self, stdout_mock):
+        printResults(False, self.criteriaResults, self.structuralResults, [])
         output = stdout_mock.getvalue()
         self.assertNotIn("Areas for Improvement", output)
         self.assertIn("No repetitive or sequential patterns detected", output)
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_feedback_displayed(self, stdout_mock):
-        criteriaResults = AnalysisResult(
-            strength=StrengthTier.WEAK,
-            feedback=["test1", "test2"],
-            entropy=48.2,
-            entropyRating="Moderate",
-        )
-        structuralResults = AnalysisResult(
-            strength=StrengthTier.GOOD,
-            feedback=["test3"]
-        )
+        self.criteriaResults.feedback = ["test1", "test2"]
+        self.structuralResults.feedback = ["test3"]
         
-        printResults(False, criteriaResults, structuralResults, [])
+        printResults(False, self.criteriaResults, self.structuralResults, [])
         output = stdout_mock.getvalue()
         
         # Check criteria feedback
@@ -325,22 +318,11 @@ class test_printResults(unittest.TestCase):
         self.assertIn(" - test1", output)
         self.assertIn(" - test2", output)
         
-        # Check structural section & patterns
+        # Check structural section and patterns
         self.assertIn(" - test3", output)
         
     @patch('sys.stdout', new_callable=StringIO)
     def test_common_password_messages(self, stdout_mock):
-        criteriaResults = AnalysisResult(
-            strength=StrengthTier.VERY_WEAK,
-            feedback=[],
-            entropy=48.2,
-            entropyRating="",
-        )
-        structuralResults = AnalysisResult(
-            strength=StrengthTier.VERY_WEAK,
-            feedback=[]
-        )
-        
         test_cases = [
             (True, "Your password is among the most commonly used"),
             (False, "Your password is not in the Seclist top password list")
@@ -351,23 +333,13 @@ class test_printResults(unittest.TestCase):
                 stdout_mock.seek(0)
                 stdout_mock.truncate(0)
                 
-                printResults(isCommon, criteriaResults, structuralResults, [])
+                printResults(isCommon, self.criteriaResults, self.structuralResults, [])
                 self.assertIn(expected_text, stdout_mock.getvalue())
     
     @patch('sys.stdout', new_callable=StringIO)
     def test_security_recommendations_displayed(self, stdout_mock):
-        criteriaResults = AnalysisResult(
-            strength=StrengthTier.VERY_WEAK,
-            feedback=[],
-            entropy=48.2,
-            entropyRating="",
-        )
-        structuralResults = AnalysisResult(
-            strength=StrengthTier.VERY_WEAK,
-            feedback=[]
-        )
-        
-        printResults(False, criteriaResults, structuralResults, securityFeedback=["test1", "test2"])
+        securityFeedback = ["test1", "test2"]
+        printResults(False, self.criteriaResults, self.structuralResults, securityFeedback)
         output = stdout_mock.getvalue()
         self.assertIn("=== Security Recommendations ===", output)
         self.assertIn(" - test1", output)
