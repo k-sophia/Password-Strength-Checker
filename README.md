@@ -47,6 +47,9 @@ python3 -m unittest test_cases.py
 $ python3 password_strength_checker.py 
 Enter Password: passwordtest
 
+Your password is not in the Seclist top password list being used here.
+
+=== Password Evaluation ===
 Password Strength: Very Weak
 Entropy:           56.41 bits [Moderate (Acceptable)]
 
@@ -56,9 +59,13 @@ Areas for Improvement:
  - Must have at least 1 number
  - Must have at least 1 special character
 
-Your password is not in the Seclist top password list being used here.
+=== Structural Risks ===
+Pattern Quality:   Strong
 
-Security Recommendations:
+Detected Patterns:
+ - No repetitive or sequential patterns detected
+
+=== Security Recommendations ===
  - NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)
  - OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
  - Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'
