@@ -287,7 +287,7 @@ class test_getStructuralFeedback(unittest.TestCase):
 
 class test_printResults(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
-    def test_criteria_feedback_omitted_when_empty(self, stdout_mock):
+    def test_feedback_omitted_when_empty(self, stdout_mock):
         criteriaResults = AnalysisResult(
             strength=StrengthTier.WEAK,
             feedback=[],
@@ -300,26 +300,33 @@ class test_printResults(unittest.TestCase):
         )
         
         printResults(False, criteriaResults, structuralResults, [])
-        self.assertNotIn("Areas for Improvement", stdout_mock.getvalue())
+        output = stdout_mock.getvalue()
+        self.assertNotIn("Areas for Improvement", output)
+        self.assertIn("No repetitive or sequential patterns detected", output)
     
     @patch('sys.stdout', new_callable=StringIO)
-    def test_criteria_feedback_displayed_when_present(self, stdout_mock):
+    def test_feedback_displayed(self, stdout_mock):
         criteriaResults = AnalysisResult(
             strength=StrengthTier.WEAK,
             feedback=["test1", "test2"],
             entropy=48.2,
-            entropyRating="",
+            entropyRating="Moderate",
         )
         structuralResults = AnalysisResult(
-            strength=StrengthTier.WEAK,
-            feedback=[]
+            strength=StrengthTier.GOOD,
+            feedback=["test3"]
         )
         
         printResults(False, criteriaResults, structuralResults, [])
         output = stdout_mock.getvalue()
+        
+        # Check criteria feedback
         self.assertIn("Areas for Improvement", output)
         self.assertIn(" - test1", output)
         self.assertIn(" - test2", output)
+        
+        # Check structural section & patterns
+        self.assertIn(" - test3", output)
         
     @patch('sys.stdout', new_callable=StringIO)
     def test_common_password_messages(self, stdout_mock):
