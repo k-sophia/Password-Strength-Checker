@@ -32,6 +32,26 @@ SECURITY_RECOMMENDATIONS = [
     "Avoid predictable character substitutions - such as '3' for 'E' or '@' for 'A'"
 ]
 
+CRITERIA_FEEDBACK_MAP = {
+    "hasMinLength": (
+        "Must be at least 15 characters", 
+        "NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)"
+    ),
+    "hasLowercase": ("Must have at least 1 lowercase letter", None),
+    "hasUppercase": ("Must have at least 1 uppercase letter", None),
+    "hasDigit": ("Must have at least 1 number", None),
+    "hasSpecial": (
+        "Must have at least 1 special character", 
+        r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"'''
+    ),
+}
+
+STRUCTURAL_FEEDBACK_MAP = {
+    "hasRepetitions": "Contains 3 or more consecutive identical characters (e.g., 'aaa' or '111')",
+    "hasNumericSequence": "Contains numeric sequences (e.g., '123' or '890')",
+    "hasAlphabeticalSequence": "Contains alphabetical sequences (e.g., 'abc' or 'zyx')",
+}
+
 # ==========================================
 # CLASSES
 # ==========================================
@@ -147,24 +167,17 @@ def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]
     criteriaFeedback = []
     securityFeedback = []
     
-    if not criteriaResults["hasMinLength"]:
-        criteriaFeedback.append("Must be at least 15 characters")
-        securityFeedback.append("NIST recommends at least 15 characters long to enhance security (NIST SP800-63B)")
-    if not criteriaResults["hasLowercase"]:
-        criteriaFeedback.append("Must have at least 1 lowercase letter")
-    if not criteriaResults["hasUppercase"]:
-        criteriaFeedback.append("Must have at least 1 uppercase letter")
-    if not criteriaResults["hasDigit"]:
-        criteriaFeedback.append("Must have at least 1 number")
-    if not criteriaResults["hasSpecial"]:
-        criteriaFeedback.append("Must have at least 1 special character")
-        securityFeedback.append(r'''OWASP recommends using these characters (between double quotes): " !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"''')
-    
-    if len(securityFeedback) < 3:
-        newfeedback = random.sample(SECURITY_RECOMMENDATIONS, 3 - len(securityFeedback))
-        for n in newfeedback:
-            securityFeedback.append(n)
+    for key, (criteriaMessage, securityMessage) in CRITERIA_FEEDBACK_MAP.items():
+        if not criteriaResults[key]:
+            criteriaFeedback.append(criteriaMessage)
+            if securityMessage:
+                securityFeedback.append(securityMessage)
         
+    remainingSecFeedback = 3 - len(securityFeedback)
+    if remainingSecFeedback > 0:
+        newFeedback = random.sample(SECURITY_RECOMMENDATIONS, min(remainingSecFeedback, len(SECURITY_RECOMMENDATIONS)))
+        securityFeedback.extend(newFeedback)
+    
     return criteriaFeedback, securityFeedback
 
 def calculateEntropy(password: str) -> Tuple[float, str]:
@@ -229,18 +242,15 @@ def analyzeStructuralPatterns(password: str) -> Dict[str, bool]:
         "hasAlphabeticalSequence": hasAlphabeticalSequence
     }
 
-def getStructuralFeedback(advancedResults: Dict[str, bool]) -> List[str]:
+def getStructuralFeedback(structuralResults: Dict[str, bool]) -> List[str]:
     """Generates specific structural feedback based on pattern analysis."""
-    advancedFeedback = []
+    structureFeedback = []
     
-    if advancedResults["hasRepetitions"]:
-        advancedFeedback.append("Contains 3 or more consecutive identical characters (e.g., 'aaa' or '111')")
-    if advancedResults["hasNumericSequence"]:
-        advancedFeedback.append("Contains numeric sequences (e.g., '123' or '890')")
-    if advancedResults["hasAlphabeticalSequence"]:
-        advancedFeedback.append("Contains alphabetical sequences (e.g., 'abc' or 'zyx')")
+    for key, (criteriaMessage) in STRUCTURAL_FEEDBACK_MAP.items():
+        if structuralResults[key]:
+            structureFeedback.append(criteriaMessage)
     
-    return advancedFeedback
+    return structureFeedback
 
 # ==========================================
 # ORCHESTRATION
