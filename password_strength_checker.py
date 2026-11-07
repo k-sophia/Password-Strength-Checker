@@ -12,12 +12,13 @@ from dataclasses import dataclass
 # ==========================================
 
 DEFAULT_COMMON_PASSWORD_FILE = "10-million-password-list-top-1000000.txt"
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
+ANSI_RESET = "\033[0m"
 
 SPECIAL_CHARS_PATTERN = re.compile(r'[ !"#\$%&\'()*+,\-./:;<=>?@\[\\\]^_`{|}~]')
-
-MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB limit
-
-ANSI_RESET = "\033[0m"
+LOWER_PATTERN = re.compile(r"[a-z]")
+UPPER_PATTERN = re.compile(r"[A-Z]")
+DIGIT_PATTERN = re.compile(r"\d")
 
 SECURITY_RECOMMENDATIONS = [
     "Though the recommended minimum length is 8, NIST recommends 15 for optimal security",
@@ -148,18 +149,12 @@ def commonlyUsedCheck(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FIL
 
 def criteriaCheck(password: str) -> Dict[str, bool]:
     """Evaluates password against length, case, digit, and special character"""
-    hasMinLength = len(password) >= 15
-    hasLowercase = re.search(r"[a-z]", password) is not None
-    hasUppercase = re.search(r"[A-Z]", password) is not None
-    hasDigit = re.search(r"\d", password) is not None
-    hasSpecial = SPECIAL_CHARS_PATTERN.search(password) is not None
-    
     return {
-        "hasMinLength": hasMinLength,
-        "hasLowercase": hasLowercase,
-        "hasUppercase": hasUppercase,
-        "hasDigit": hasDigit,
-        "hasSpecial": hasSpecial
+        "hasMinLength": len(password) >= 15,
+        "hasLowercase": bool(LOWER_PATTERN.search(password)),
+        "hasUppercase": bool(UPPER_PATTERN.search(password)),
+        "hasDigit": bool(DIGIT_PATTERN.search(password)),
+        "hasSpecial": bool(SPECIAL_CHARS_PATTERN.search(password))
     }
 
 def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]:
@@ -185,11 +180,11 @@ def calculateEntropy(password: str) -> Tuple[float, str]:
     
     # Determine character pool size (N) based on included character sets
     poolSize = 0
-    if re.search(r"[a-z]", password):
+    if LOWER_PATTERN.search(password):
         poolSize += 26
-    if re.search(r"[A-Z]", password):
+    if UPPER_PATTERN.search(password):
         poolSize += 26
-    if re.search(r"\d", password):
+    if DIGIT_PATTERN.search(password):
         poolSize += 10
     if SPECIAL_CHARS_PATTERN.search(password):
         # Standard ASCII special characters pool approximation (~32-33)
