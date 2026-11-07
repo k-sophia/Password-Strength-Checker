@@ -175,18 +175,18 @@ def getFeedback(criteriaResults: Dict[str, bool]) -> Tuple[List[str], List[str]]
     
     return criteriaFeedback, securityFeedback
 
-def calculateEntropy(password: str) -> Tuple[float, str]:
-    """Calculates the Shannon entropy of a password in bits and returns its rating description."""
+def calculateEntropy(password: str, criteriaFlags: Dict[str, bool]) -> Tuple[float, str]:
+    """Calculates the Shannon entropy of a password in bits using pre-evaluated criteria flags."""
     
-    # Determine character pool size (N) based on included character sets
+    # Determine character pool size (N) using the already-computed criteria flags
     poolSize = 0
-    if LOWER_PATTERN.search(password):
+    if criteriaFlags["hasLowercase"]:
         poolSize += 26
-    if UPPER_PATTERN.search(password):
+    if criteriaFlags["hasUppercase"]:
         poolSize += 26
-    if DIGIT_PATTERN.search(password):
+    if criteriaFlags["hasDigit"]:
         poolSize += 10
-    if SPECIAL_CHARS_PATTERN.search(password):
+    if criteriaFlags["hasSpecial"]:
         # Standard ASCII special characters pool approximation (~32-33)
         poolSize += 32
     
@@ -298,8 +298,8 @@ def isPasswordStrong(password: str, filename: str = DEFAULT_COMMON_PASSWORD_FILE
     isCommon = commonlyUsedCheck(password, filename)
     
     # 2. Standard Criteria Evaluation
-    entropy, entropyRating = calculateEntropy(password)
     criteriaFlags = criteriaCheck(password)
+    entropy, entropyRating = calculateEntropy(password, criteriaFlags)
     criteriaFeedback, securityFeedback = getFeedback(criteriaFlags)
     criteriaResults = AnalysisResult(
         strength=StrengthTier.getStrengthValue(criteriaFlags),

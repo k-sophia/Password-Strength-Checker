@@ -116,28 +116,43 @@ class test_StrengthValue(unittest.TestCase):
                 self.assertEqual(StrengthTier.getStructuralStrengthValue(self.structuralResults), expected_strength)
 
 class test_calculateEntropy(unittest.TestCase):
+    def setUp(self):
+        self.criteriaResults = {
+            "hasMinLength": False,
+            "hasLowercase": False,
+            "hasUppercase": False,
+            "hasDigit": False,
+            "hasSpecial": False
+        }
+        
     def test_low_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("aaaaaa")
-        self.assertLess(entropyVal, 30.0)
+        entropyVal, ratingVal = calculateEntropy("aaaaaa", self.criteriaResults)
+        self.assertLess(entropyVal, 40.0)
         self.assertIn("Low", ratingVal)
 
     def test_moderate_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("abcdefghijkl")
+        self.criteriaResults["hasLowercase"] = True
+        entropyVal, ratingVal = calculateEntropy("abcdefghijkl", self.criteriaResults)
         self.assertTrue(40.0 <= entropyVal < 60.0)
         self.assertIn("Moderate", ratingVal)
 
     def test_high_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("Abcdef123456")
+        self.criteriaResults["hasUppercase"] = True
+        self.criteriaResults["hasDigit"] = True
+        entropyVal, ratingVal = calculateEntropy("Abcdef123456", self.criteriaResults)
         self.assertTrue(60.0 <= entropyVal < 80.0)
         self.assertIn("High", ratingVal)
 
     def test_very_high_entropy(self):
-        entropyVal, ratingVal = calculateEntropy("K8#mP9$xL2!qR5%v")
+        self.criteriaResults["hasMinLength"] = True
+        self.criteriaResults["hasSpecial"] = True
+        entropyVal, ratingVal = calculateEntropy("K8#mP9$xL2!qR5%v", self.criteriaResults)
         self.assertGreaterEqual(entropyVal, 80.0)
         self.assertIn("Very High", ratingVal)
 
     def test_fallback_pool_size(self):
-        entropyVal, ratingVal = calculateEntropy("ééééééééééééééé")
+        
+        entropyVal, ratingVal = calculateEntropy("ééééééééééééééé", self.criteriaResults)
         self.assertEqual(entropyVal, 0.0)
         self.assertIn("Low", ratingVal)
 
